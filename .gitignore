@@ -1,0 +1,6 @@
+bin/
+compiled_shaders/
+obj/
+Makefile
+*.make
+
