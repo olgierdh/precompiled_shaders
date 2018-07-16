@@ -4,13 +4,10 @@
 
 namespace logger
 {
-    template < typename... Ts > void eater( Ts&&... )
-    {
-    }
-
     template < typename... Ts > constexpr void log( Ts&&... args )
     {
-        eater( ( ( std::cout << args ), 0 )... );
+        const int a[] = {( ( std::cout << args ), 0 )...};
+        ( void )a;
         std::cout << std::endl;
     }
 } // namespace logger
