@@ -31,6 +31,6 @@ project "precompiled_shaders"
         buildmessage 'Compiling %{file.relpath}'
         os.mkdir('compiled_shaders')
         buildcommands   {
-            'glslangValidator -o compiled_shaders/%{file.name}.spirv -G430 %{file.relpath}'
+            'glslangValidator -o compiled_shaders/%{file.name}.spirv -G450 %{file.relpath}'
         }
         buildoutputs { 'compiled_shaders/%{file.name}.spirv' }
