@@ -200,7 +200,7 @@ int main()
         exit( EXIT_FAILURE );
     }
 
-    const auto w = glfw_window::make( 4, 5, 1280, 1024 );
+    const auto w = glfw_window::make( 4, 5, 1280, 720 );
     if ( !w.is_initialized() )
     {
         exit( EXIT_FAILURE );
