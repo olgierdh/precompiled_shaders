@@ -191,8 +191,8 @@ namespace gl_device
                                  &max_len, &info_log[0] );
 
             gl_helpers::gl_call( glDeleteProgram, program_id );
-			
-			logger::log( "Failed to create a program: ", info_log.data() );			
+
+            logger::log( "Failed to create a program: ", info_log.data() );
 
             return program{};
         }
