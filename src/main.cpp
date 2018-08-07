@@ -233,9 +233,6 @@ int main()
     auto r = renderer();
     r.on_initialize();
 
-    assert( r.get_vertex_shader().is_valid() );
-    assert( r.get_fragmetn_shader().is_valid() );
-
     while ( !w.frame_begin() )
     {
         w.frame_end();
