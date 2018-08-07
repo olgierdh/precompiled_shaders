@@ -10,6 +10,7 @@
 
 #include "gl/gl_helpers.hpp"
 #include "renderer.hpp"
+#include "binary_loader.hpp"
 
 namespace
 {
@@ -200,6 +201,11 @@ struct glew_context
 
 int main()
 {
+    const auto data = load_binary_data( "test.txt" );
+
+    std::copy( data.cbegin(), data.cend(),
+               std::ostream_iterator< unsigned char >( std::cout, "" ) );
+
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
     {
