@@ -6,6 +6,7 @@
 
 #include "gl/gl_helpers.hpp"
 #include "logger.hpp"
+#include "binary_loader.hpp"
 
 struct gl_resource
 {
@@ -133,7 +134,8 @@ namespace gl_device
 
     template < typename T >
     static inline shader< T >
-    make_shader_from_binary( const std::vector< unsigned char >& data,
+    make_shader_from_binary( T&&,
+                             const std::vector< unsigned char >& data,
                              const std::string_view& entry_point )
     {
         shader< T > vs = make_shader( T{} );
@@ -159,7 +161,8 @@ namespace gl_device
             std::vector< GLchar > info_log( max_len );
             gl_helpers::gl_call( glGetShaderInfoLog, vs.id(), max_len, &max_len,
                                  &info_log[0] );
-
+            
+            logger::log( "failed to create shader!!!", info_log.data() );
             return shader< T >{};
         }
 
@@ -172,8 +175,16 @@ struct renderer
     void on_initialize()
     {
         gl_helpers::check_gl_errors();
-        m_vertex_shader   = gl_device::make_shader( vertex_shader_type{} );
-        m_fragment_shader = gl_device::make_shader( fragment_shader_type{} );
+
+        const auto vs =
+            load_binary_data( "compiled_shaders/triangle.vert.spirv" );
+        const auto fs =
+            load_binary_data( "compiled_shaders/triangle.frag.spirv" );
+
+        m_vertex_shader = gl_device::make_shader_from_binary(
+            vertex_shader_type{}, vs, "main" );
+        m_fragment_shader = gl_device::make_shader_from_binary(
+            fragment_shader_type{}, fs, "main" );
     }
 
     void on_render()
