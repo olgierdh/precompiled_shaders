@@ -1,11 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include <cassert>
 
 #include "logger.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include "renderer.hpp"
 
 namespace
 {
@@ -205,12 +208,24 @@ int main()
     {
         exit( EXIT_FAILURE );
     }
+    
+    gl_helpers::check_gl_errors();
 
     const auto g = glew_context::make();
     if ( !g.is_initialized() )
     {
         exit( EXIT_FAILURE );
     }
+
+    // glew gives us an invalid enum error 
+    // it's known issue 
+    gl_helpers::eat_gl_errors();
+
+    auto r = renderer();
+    r.on_initialize();
+
+    assert( r.get_vertex_shader().is_valid() );
+    assert( r.get_fragmetn_shader().is_valid() );
 
     while ( !w.frame_begin() )
     {
