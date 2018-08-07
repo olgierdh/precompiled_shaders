@@ -1,10 +1,11 @@
 #pragma once
 #include <utility>
+#include <vector>
+
 #include <GL/glew.h>
 
 #include "gl/gl_helpers.hpp"
 #include "logger.hpp"
-
 
 struct gl_resource
 {
@@ -19,7 +20,8 @@ struct gl_resource
     {
     }
 
-    gl_resource( gl_resource&& other ) : m_id{std::exchange( other.m_id, invalid_id )}
+    gl_resource( gl_resource&& other )
+        : m_id{std::exchange( other.m_id, invalid_id )}
     {
     }
 
@@ -32,6 +34,11 @@ struct gl_resource
     GLuint id() const
     {
         return m_id;
+    }
+
+    GLuint* ptr()
+    {
+        return &m_id;
     }
 
     bool is_valid() const
@@ -63,8 +70,8 @@ template < typename T > struct shader : public gl_resource
     }
 
     shader( shader&& other )
-        : gl_resource( std::move( other ) ), m_is_set{
-                                                 std::exchange( other.m_is_set, false )}
+        : gl_resource( std::move( other ) ), m_is_set{std::exchange(
+                                                 other.m_is_set, false )}
     {
     }
 
@@ -108,18 +115,55 @@ namespace gl_device
 {
     template < typename T > static inline shader< T > make_shader( T&& );
 
-    static inline shader< vertex_shader_type > make_shader( vertex_shader_type&& )
+    static inline shader< vertex_shader_type >
+    make_shader( vertex_shader_type&& )
     {
         logger::log( "Create vertex shader... " );
         return shader< vertex_shader_type >(
             gl_helpers::gl_call( glCreateShader, GL_VERTEX_SHADER ) );
     }
 
-    static inline shader< fragment_shader_type > make_shader( fragment_shader_type&& )
+    static inline shader< fragment_shader_type >
+    make_shader( fragment_shader_type&& )
     {
         logger::log( "Create fragment shader... " );
         return shader< fragment_shader_type >(
             gl_helpers::gl_call( glCreateShader, GL_FRAGMENT_SHADER ) );
+    }
+
+    template < typename T >
+    static inline shader< T >
+    make_shader_from_binary( const std::vector< unsigned char >& data,
+                             const std::string_view& entry_point )
+    {
+        shader< T > vs = make_shader( T{} );
+        assert( vs.is_valid() && "Shader is not valid!" );
+
+        gl_helpers::gl_call( glShaderBinary, 1, vs.ptr(),
+                             GL_SHADER_BINARY_FORMAT_SPIR_V, data.data(),
+                             data.size() );
+
+        gl_helpers::gl_call( glSpecializeShader, vs.id(), entry_point.data(), 0,
+                             nullptr, nullptr );
+
+        GLint is_compiled = 0;
+        gl_helpers::gl_call( glGetShaderiv, vs.id(), GL_COMPILE_STATUS,
+                             &is_compiled );
+
+        if ( is_compiled == GL_FALSE )
+        {
+            GLint max_len = 0;
+            gl_helpers::gl_call( glGetShaderiv, vs.id(), GL_INFO_LOG_LENGTH,
+                                 &max_len );
+
+            std::vector< GLchar > info_log( max_len );
+            gl_helpers::gl_call( glGetShaderInfoLog, vs.id(), max_len, &max_len,
+                                 &info_log[0] );
+
+            return shader< T >{};
+        }
+
+        return vs;
     }
 }; // namespace gl_device
 
