@@ -235,6 +235,7 @@ int main()
 
     while ( !w.frame_begin() )
     {
+		r.on_render();
         w.frame_end();
     }
 

@@ -145,7 +145,6 @@ struct pass
 {
 };
 
-
 namespace gl_device
 {
     template < typename T > static inline shader< T > make_shader( T&& );
