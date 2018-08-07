@@ -8,6 +8,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "gl/gl_helpers.hpp"
 #include "renderer.hpp"
 
 namespace
