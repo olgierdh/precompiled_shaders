@@ -137,6 +137,92 @@ struct program : public gl_resource
     fragment_shader m_fs;
 };
 
+struct vertex_array_object : public gl_resource
+{
+    vertex_array_object() : gl_resource()
+    {
+    }
+
+    vertex_array_object( GLuint id ) : gl_resource( id )
+    {
+    }
+
+    vertex_array_object( vertex_array_object&& other )
+        : gl_resource( std::move( other ) )
+    {
+    }
+
+    vertex_array_object& operator=( vertex_array_object&& other )
+    {
+        gl_resource::operator=( std::move( other ) );
+        return *this;
+    }
+
+    ~vertex_array_object()
+    {
+        if ( is_set() )
+        {
+            logger::log( "Delete vao" );
+            gl_helpers::gl_call( glDeleteVertexArrays, 1, ptr() );
+        }
+    }
+};
+
+struct vertex_buffer_object : public gl_resource
+{
+    vertex_buffer_object() : gl_resource()
+    {
+    }
+
+    vertex_buffer_object( GLuint id ) : gl_resource( id )
+    {
+    }
+
+    vertex_buffer_object( vertex_buffer_object&& other )
+        : gl_resource( std::move( other ) )
+    {
+    }
+
+    vertex_buffer_object& operator=( vertex_buffer_object&& other )
+    {
+        gl_resource::operator=( std::move( other ) );
+        return *this;
+    }
+
+    ~vertex_buffer_object()
+    {
+        if ( is_set() )
+        {
+            logger::log( "Delete vbo" );
+            gl_helpers::gl_call( glDeleteBuffers, 1, ptr() );
+        }
+    }
+};
+
+template < typename T > struct scope_binder
+{
+    scope_binder( T& v )
+    {
+        bind( v );
+    }
+
+    ~scope_binder()
+    {
+        bind( T{} );
+    }
+
+    scope_binder( const scope_binder& ) = delete;
+    scope_binder( scope_binder&& )      = delete;
+    scope_binder& operator=( const scope_binder& ) = delete;
+    scope_binder& operator=( scope_binder&& ) = delete;
+};
+
+template < typename T >
+[[nodiscard]] inline scope_binder< T > scope_bind( T& resource )
+{
+    return scope_binder( resource );
+}
+
 struct pipeline
 {
 };
@@ -165,6 +251,64 @@ namespace gl_device
             gl_helpers::gl_call( glCreateShader, GL_FRAGMENT_SHADER ) );
     }
 
+    static inline vertex_buffer_object make_vbo()
+    {
+        logger::log( "Create vbo" );
+        GLuint vbo = 0;
+        gl_helpers::gl_call( glGenBuffers, 1, &vbo );
+        return vertex_buffer_object( vbo );
+    }
+
+    template < typename T > static inline void bind( const T& );
+
+    static inline void bind( vertex_buffer_object& vbo )
+    {
+        gl_helpers::gl_call( glBindBuffer, GL_ARRAY_BUFFER,
+                             vbo.is_set() ? vbo.id() : 0 );
+    }
+
+    static inline void bind( vertex_array_object& vao )
+    {
+        gl_helpers::gl_call( glBindVertexArray, vao.is_set() ? vao.id() : 0 );
+    }
+
+    template < template < typename > class T, typename D >
+    static inline void
+    write_data( vertex_buffer_object& vbo, const T< D >& data )
+    {
+        const auto data_size = data.size() * sizeof( D );
+        const auto s = scope_bind( vbo );
+        glBufferData( GL_ARRAY_BUFFER, data_size, data.data(), GL_STATIC_DRAW );
+    }
+
+    static inline vertex_array_object make_vao()
+    {
+        logger::log( "Create vao" );
+        GLuint vao = gl_resource::invalid_id;
+        gl_helpers::gl_call( glGenVertexArrays, 1, &vao );
+        return vertex_array_object( vao );
+    }
+
+    template < typename T >
+    static inline void configure_vao( vertex_buffer_object& vbo,
+                                      vertex_array_object& vao,
+                                      GLuint index )
+    {
+        const auto s0 = scope_bind( vbo );
+        const auto s1 = scope_bind( vao );
+
+        glVertexAttribPointer( index, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+
+        
+    }
+
+    /**
+     * This is not the best way of initialization.
+     * Think about adding intermediate stages of processing for programs
+     * a) before attach
+     * b) after attach
+     * c) after link
+     */
     static inline program
     make_program( vertex_shader&& vs, fragment_shader&& fs )
     {
