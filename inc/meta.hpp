@@ -123,18 +123,18 @@ template < int U, typename T >
 using push_back_on_integer_sequence =
     typename push_back_on_integer_sequence_impl< T >::template value_type< U >;
 
-template < int N > struct integer_sequence_constructor
+template < int N > struct construct_integer_sequence_impl
 {
     template < int C, typename T >
-    using value_type = typename integer_sequence_constructor< N - 1 >::
+    using value_type = typename construct_integer_sequence_impl< N - 1 >::
         template value_type< C + 1, push_back_on_integer_sequence< C, T > >;
 };
 
-template <> struct integer_sequence_constructor< 0 >
+template <> struct construct_integer_sequence_impl< 0 >
 {
     template < int C, typename T > using value_type = T;
 };
 
 template < int N >
-using construct_integer_sequence = typename integer_sequence_constructor<
+using construct_integer_sequence = typename construct_integer_sequence_impl<
     N >::template value_type< 0, integer_sequence<> >;
