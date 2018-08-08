@@ -43,8 +43,12 @@ template < template < typename... > class F, typename... Ts >
 using foreach =
     type_list< typename foreacher< F >::template value_type< Ts >... >;
 
+// Prototype for calling f with a functor on a type_list
 template < typename T > struct f_on_type_list;
 
+/**
+ * Call F0 with a functor F on a type_list
+ */
 template < typename... Ts > struct f_on_type_list< type_list< Ts... > >
 {
     template < template < template < typename... > class, typename... >
@@ -53,6 +57,18 @@ template < typename... Ts > struct f_on_type_list< type_list< Ts... > >
     using value_type = F0< F, Ts... >;
 };
 
+/**
+ * For direct usage - simplifies the calling
+ */
+template < typename T,
+           template < template < typename... > class, typename... > class F0,
+           template < typename... > class F >
+using call_f_on_a_type_list =
+    typename f_on_type_list< T >::template value_type< F0, F >;
+
+/**
+ * Reducing lists using functor
+ */
 template < template < typename... > class F > struct reducer
 {
     template < int size, typename R, typename T > struct dispatch;
@@ -61,9 +77,9 @@ template < template < typename... > class F > struct reducer
     struct dispatch< size, R, type_list< H, Ts... > >
     {
         using value_type =
-            reducer< F >::dispatch< size - 1,
-                                    typename F< R, H >::value_type,
-                                    type_list< Ts... > >;
+            typename reducer< F >::dispatch< size - 1,
+                                             typename F< R, H >::value_type,
+                                             type_list< Ts... > >::value_type;
     };
 
     template < typename R > struct dispatch< 0, R, type_list<> >
@@ -72,9 +88,10 @@ template < template < typename... > class F > struct reducer
     };
 
     template < typename H, typename H2, typename... Ts >
-    using value_type = typename reducer< F >::dispatch< sizeof...( Ts ),
-                                               typename F< H, H2 >::value_type,
-                                               type_list< Ts... > >::value_type;
+    using value_type =
+        typename reducer< F >::dispatch< sizeof...( Ts ),
+                                         typename F< H, H2 >::value_type,
+                                         type_list< Ts... > >::value_type;
 };
 
 template < template < typename... > class F, typename H, typename... Ts >

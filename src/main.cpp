@@ -217,21 +217,21 @@ template < typename A0, typename A1 > struct type_reduce_impl
             template value_type< A0, false_type >;
 };
 
-template< typename A1 > struct type_reduce_impl< false_type, A1 >
+template < typename A1 > struct type_reduce_impl< false_type, A1 >
 {
     using value_type = false_type;
 };
 
 template < typename T > void test( T&& );
 
-using values = f_on_type_list<
-    my_types >::value_type< foreach, type_checker< int >::type_checker_impl >;
+using values = f_on_type_list< my_types >::
+    template value_type< foreach, type_checker< int >::type_checker_impl >;
 
-using res = reduce< type_reduce_impl, false_type, false_type, int >;
+using res = call_f_on_a_type_list< my_types, reduce, type_reduce_impl >;
 
 int main()
 {
-    // test( res{} );
+    test( res{} );
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
