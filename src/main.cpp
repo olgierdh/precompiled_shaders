@@ -229,9 +229,12 @@ using values = f_on_type_list< my_types >::
 
 using res = call_f_on_a_type_list< my_types, reduce, type_reduce_impl >;
 
+
+using is = construct_integer_sequence< 10 >; 
+
 int main()
 {
-    test( res{} );
+    test( is{} );
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )

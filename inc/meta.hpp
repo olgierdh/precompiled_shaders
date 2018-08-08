@@ -68,6 +68,9 @@ using call_f_on_a_type_list =
 
 /**
  * Reducing lists using functor
+ *
+ * Implementation uses the intermediate dispatcher for calculating the number of
+ * elements left within the list.
  */
 template < template < typename... > class F > struct reducer
 {
@@ -94,6 +97,44 @@ template < template < typename... > class F > struct reducer
                                          type_list< Ts... > >::value_type;
 };
 
+/**
+ * For simplified calling
+ */
 template < template < typename... > class F, typename H, typename... Ts >
 using reduce = typename reducer< F >::template value_type< Ts... >;
 
+
+// integer sequences
+template < int... Is > struct integer_sequence
+{
+};
+
+template < int U, int... Ts > using push_back = integer_sequence< Ts..., U >;
+
+template < typename T > struct push_back_on_integer_sequence_impl;
+
+template < int... Ts >
+struct push_back_on_integer_sequence_impl< integer_sequence< Ts... > >
+{
+    template < int U > using value_type = push_back< U, Ts... >;
+};
+
+template < int U, typename T >
+using push_back_on_integer_sequence =
+    typename push_back_on_integer_sequence_impl< T >::template value_type< U >;
+
+template < int N > struct integer_sequence_constructor
+{
+    template < int C, typename T >
+    using value_type = typename integer_sequence_constructor< N - 1 >::
+        template value_type< C + 1, push_back_on_integer_sequence< C, T > >;
+};
+
+template <> struct integer_sequence_constructor< 0 >
+{
+    template < int C, typename T > using value_type = T;
+};
+
+template < int N >
+using construct_integer_sequence = typename integer_sequence_constructor<
+    N >::template value_type< 0, integer_sequence<> >;
