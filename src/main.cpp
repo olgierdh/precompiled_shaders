@@ -10,7 +10,8 @@
 
 #include "gl/gl_helpers.hpp"
 #include "renderer.hpp"
-#include "binary_loader.hpp"
+
+#include "meta.hpp"
 
 namespace
 {
@@ -199,12 +200,38 @@ struct glew_context
     bool m_is_initialized;
 };
 
+using my_types = type_list< int, float, char >;
+
+template < typename T > struct type_checker
+{
+    template < typename R > struct type_checker_impl
+    {
+        using value_type = typename is_same< T, R >::value_type;
+    };
+};
+
+template < typename A0, typename A1 > struct type_reduce_impl
+{
+    using value_type =
+        typename conditional< is_same< A0, A1 >::value_type::value >::
+            template value_type< A0, false_type >;
+};
+
+template< typename A1 > struct type_reduce_impl< false_type, A1 >
+{
+    using value_type = false_type;
+};
+
+template < typename T > void test( T&& );
+
+using values = f_on_type_list<
+    my_types >::value_type< foreach, type_checker< int >::type_checker_impl >;
+
+using res = reduce< type_reduce_impl, false_type, false_type, int >;
+
 int main()
 {
-    const auto data = load_binary_data( "test.txt" );
-
-    std::copy( data.cbegin(), data.cend(),
-               std::ostream_iterator< unsigned char >( std::cout, "" ) );
+    // test( res{} );
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
@@ -235,7 +262,7 @@ int main()
 
     while ( !w.frame_begin() )
     {
-		r.on_render();
+        r.on_render();
         w.frame_end();
     }
 
