@@ -234,7 +234,7 @@ using is = construct_integer_sequence< 10 >;
 
 int main()
 {
-    test( is{} );
+    test( res{} );
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )

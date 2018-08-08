@@ -66,6 +66,26 @@ template < typename T,
 using call_f_on_a_type_list =
     typename f_on_type_list< T >::template value_type< F0, F >;
 
+
+namespace detail
+{
+    template < int size > struct dispatch
+    {
+        template < template < typename... > class F,
+                   typename R,
+                   typename H,
+                   typename... Ts >
+        using value_type = typename dispatch< size - 1 >::
+            template value_type< typename F< R, H >::value_type, Ts... >;
+    };
+
+    template <> struct dispatch< 0 >
+    {
+        template < template < typename... > class F, typename R >
+        using value_type = R;
+    };
+} // namespace detail
+
 /**
  * Reducing lists using functor
  *
@@ -74,27 +94,9 @@ using call_f_on_a_type_list =
  */
 template < template < typename... > class F > struct reducer
 {
-    template < int size, typename R, typename T > struct dispatch;
-
-    template < int size, typename R, typename H, typename... Ts >
-    struct dispatch< size, R, type_list< H, Ts... > >
-    {
-        using value_type =
-            typename reducer< F >::dispatch< size - 1,
-                                             typename F< R, H >::value_type,
-                                             type_list< Ts... > >::value_type;
-    };
-
-    template < typename R > struct dispatch< 0, R, type_list<> >
-    {
-        using value_type = R;
-    };
-
     template < typename H, typename H2, typename... Ts >
-    using value_type =
-        typename reducer< F >::dispatch< sizeof...( Ts ),
-                                         typename F< H, H2 >::value_type,
-                                         type_list< Ts... > >::value_type;
+    using value_type = typename detail::dispatch< sizeof...( Ts ) >::
+        template value_type< F, typename F< H, H2 >::value_type, Ts... >;
 };
 
 /**
@@ -109,32 +111,41 @@ template < int... Is > struct integer_sequence
 {
 };
 
-template < int U, int... Ts > using push_back = integer_sequence< Ts..., U >;
-
-template < typename T > struct push_back_on_integer_sequence_impl;
-
-template < int... Ts >
-struct push_back_on_integer_sequence_impl< integer_sequence< Ts... > >
+namespace detail
 {
-    template < int U > using value_type = push_back< U, Ts... >;
-};
+    template < int U, int... Ts >
+    using push_back = integer_sequence< Ts..., U >;
+
+    template < typename T > struct push_back_on_integer_sequence_impl;
+
+    template < int... Ts >
+    struct push_back_on_integer_sequence_impl< integer_sequence< Ts... > >
+    {
+        template < int U > using value_type = push_back< U, Ts... >;
+    };
+} // namespace detail
 
 template < int U, typename T >
 using push_back_on_integer_sequence =
-    typename push_back_on_integer_sequence_impl< T >::template value_type< U >;
+    typename detail::push_back_on_integer_sequence_impl<
+        T >::template value_type< U >;
 
-template < int N > struct construct_integer_sequence_impl
+namespace detail
 {
-    template < int C, typename T >
-    using value_type = typename construct_integer_sequence_impl< N - 1 >::
-        template value_type< C + 1, push_back_on_integer_sequence< C, T > >;
-};
+    template < int N > struct construct_integer_sequence_impl
+    {
+        template < int C, typename T >
+        using value_type = typename construct_integer_sequence_impl< N - 1 >::
+            template value_type< C + 1, push_back_on_integer_sequence< C, T > >;
+    };
 
-template <> struct construct_integer_sequence_impl< 0 >
-{
-    template < int C, typename T > using value_type = T;
-};
+    template <> struct construct_integer_sequence_impl< 0 >
+    {
+        template < int C, typename T > using value_type = T;
+    };
+} // namespace detail
 
 template < int N >
-using construct_integer_sequence = typename construct_integer_sequence_impl<
-    N >::template value_type< 0, integer_sequence<> >;
+using construct_integer_sequence =
+    typename detail::construct_integer_sequence_impl<
+        N >::template value_type< 0, integer_sequence<> >;
