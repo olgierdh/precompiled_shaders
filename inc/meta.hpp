@@ -58,7 +58,7 @@ template < typename... Ts > struct f_on_type_list< type_list< Ts... > >
 };
 
 /**
- * For direct usage - simplifies the calling
+ * For direct usage - simplifies the usage - works with all algorithms like foreach or reduce.
  */
 template < typename T,
            template < template < typename... > class, typename... > class F0,
