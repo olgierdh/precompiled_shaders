@@ -20,6 +20,8 @@ struct false_type
     static constexpr bool value = false;
 };
 
+struct empty_type {};
+
 template < typename T, typename R > struct is_same
 {
     using value_type = false_type;
@@ -34,6 +36,36 @@ template < typename... T > struct type_list
 {
 };
 
+namespace detail
+{
+    template < typename H, typename... Ts >
+    constexpr H get_head_impl( type_list< H, Ts... >&& );
+
+    template < typename H, typename H1, typename... Ts >
+    constexpr H1 get_next_head_impl( type_list< H, H1, Ts... >&& );
+
+    template < typename H, typename... Ts >
+    constexpr type_list< Ts... > get_tail_impl( type_list< H, Ts... >&& );
+
+    template< typename... Ts >
+    constexpr int get_len_impl( type_list< Ts... >&& )
+    {
+        return sizeof...( Ts );
+    }
+} // namespace detail
+
+template < typename T >
+using get_head = decltype( detail::get_head_impl( T{} ) );
+
+template < typename T >
+using get_next_head = decltype( detail::get_next_head_impl( T{} ) );
+
+template < typename T >
+using get_tail = decltype( detail::get_tail_impl( T{} ) );
+
+template< typename T >
+constexpr auto get_len = detail::get_len_impl( T{} );
+
 template < template < typename... > class F > struct foreacher
 {
     template < typename T > using value_type = typename F< T >::value_type;
@@ -46,64 +78,71 @@ using foreach =
 // Prototype for calling f with a functor on a type_list
 template < typename T > struct f_on_type_list;
 
-/**
- * Call F0 with a functor F on a type_list
- */
-template < typename... Ts > struct f_on_type_list< type_list< Ts... > >
-{
-    template < template < template < typename... > class, typename... >
-               class F0,
-               template < typename... > class F >
-    using value_type = F0< F, Ts... >;
-};
-
-/**
- * For direct usage - simplifies the usage - works with all algorithms like foreach or reduce.
- */
-template < typename T,
-           template < template < typename... > class, typename... > class F0,
-           template < typename... > class F >
-using call_f_on_a_type_list =
-    typename f_on_type_list< T >::template value_type< F0, F >;
-
-
 namespace detail
 {
-    template < int size > struct dispatch
+    template < int size > struct reduce_dispatch
     {
-        template < template < typename... > class F,
-                   typename R,
-                   typename H,
-                   typename... Ts >
-        using value_type = typename dispatch< size - 1 >::
-            template value_type< typename F< R, H >::value_type, Ts... >;
+        template < template < typename... > class F, typename R, typename T >
+        using value_type =
+            typename reduce_dispatch< size - 1 >::template value_type<
+                F,
+                typename F< R, get_head< T > >::value_type,
+                get_tail< T > >;
     };
 
-    template <> struct dispatch< 0 >
+    template <> struct reduce_dispatch< 0 >
     {
-        template < template < typename... > class F, typename R >
+        template < template < typename... > class F, typename R, typename T >
         using value_type = R;
     };
+
+    template < int size > struct until_dispatch
+    {
+        template < template < typename... > class F, typename T >
+        using value_type =
+            typename conditional< F< get_head< T > >::value_type::value >::
+                template value_type<
+                    typename F< get_head< T > >::value_type,
+                    typename until_dispatch<
+                        size - 1 >::template value_type< F, get_tail< T > > >;
+    };
+
+    template <> struct until_dispatch< 1 >
+    {
+        template < template < typename... > class F, typename T >
+        using value_type = typename F< get_head< T > >::value_type;
+    };
 } // namespace detail
+
+template < template < typename... > class F > struct finder
+{
+    template < typename T >
+    using value_type = typename detail::until_dispatch<
+        get_len< T > >::template value_type< F, T >;
+};
+
+template < template < typename... > class F, typename T >
+using find_if = typename finder< F >::template value_type< T >;
 
 /**
  * Reducing lists using functor
  *
- * Implementation uses the intermediate dispatcher for calculating the number of
- * elements left within the list.
+ * Implementation uses the intermediate dispatcher for calculating the
+ * number of elements left within the list.
  */
 template < template < typename... > class F > struct reducer
 {
-    template < typename H, typename H2, typename... Ts >
-    using value_type = typename detail::dispatch< sizeof...( Ts ) >::
-        template value_type< F, typename F< H, H2 >::value_type, Ts... >;
+    template < typename T >
+    using value_type = typename detail::reduce_dispatch< get_len< T > >::
+        template value_type<
+            F, empty_type, T >;
 };
 
 /**
  * For simplified calling
  */
-template < template < typename... > class F, typename H, typename... Ts >
-using reduce = typename reducer< F >::template value_type< Ts... >;
+template < template < typename... > class F, typename T >
+using reduce = typename reducer< F >::template value_type< T >;
 
 
 // integer sequences

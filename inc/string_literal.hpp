@@ -2,9 +2,9 @@
 
 template < char... chrs > struct string_literal
 {
-    constexpr const char* str()
+    constexpr const char* str() const noexcept
     {
-        constexpr char str[sizeof...(chrs) + 1] = { chrs..., 0 };
+        constexpr char str[sizeof...( chrs ) + 1] = {chrs..., 0};
         return str;
     }
 };

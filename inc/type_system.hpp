@@ -1,31 +1,42 @@
-#pragma once 
+#pragma once
 
 #include "meta.hpp"
+#include "string_literal.hpp"
 
 /**
  * Add ablity to describe types and generate code using that description
  * i.e. generate vertex buffers/arrays using vertex type
  */
 
-struct vec3f
+template < typename T, typename S, typename F > struct struct_desc
 {
-    float x;
-    float y;
-    float z;
+    using value_type = T;
+    using value_name = S;
+    using field_list = F;
 };
 
-struct vec4f
+template < typename T, typename C > struct field_type
 {
-    float x;
-    float y;
-    float z;
-    float w;
+    using value_type   = T;
+    using context_type = C;
 };
 
-struct vertex
+template < typename T, typename C >
+constexpr auto detect_field_type( T C::* ) -> field_type< T, C >;
+
+template < auto f, typename S > struct field_desc
 {
-    vec4f m_position;
-    vec3f m_color;
+    constexpr static auto member_ptr = f;
+    using value_type                 = decltype( detect_field_type( f ) );
+    using value_name                 = S;
 };
 
+template < typename... Ts > using fields = type_list< Ts... >;
+
+template < typename T, typename S >
+constexpr auto make_field_desc( T&& t, S && ) -> field_desc< T{}, S >;
+
+template < typename T, typename S, typename... Fs >
+constexpr auto make_struct_desc( T&&, S&&, Fs&&... )
+    -> struct_desc< T, S, type_list< Fs... > >;
 

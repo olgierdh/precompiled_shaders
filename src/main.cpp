@@ -12,6 +12,8 @@
 #include "renderer.hpp"
 
 #include "meta.hpp"
+#include "type_system.hpp"
+#include "renderer_types.hpp"
 
 namespace
 {
@@ -200,7 +202,8 @@ struct glew_context
     bool m_is_initialized;
 };
 
-using my_types = type_list< int, float, char >;
+using my_types = type_list< int, float, char, int, float, float, char, int >;
+using my_same_types = type_list< int, int, int >;
 
 template < typename T > struct type_checker
 {
@@ -217,6 +220,11 @@ template < typename A0, typename A1 > struct type_reduce_impl
             template value_type< A0, false_type >;
 };
 
+template< typename A1 > struct type_reduce_impl< empty_type, A1 >
+{
+    using value_type = A1;
+};
+
 template < typename A1 > struct type_reduce_impl< false_type, A1 >
 {
     using value_type = false_type;
@@ -224,17 +232,26 @@ template < typename A1 > struct type_reduce_impl< false_type, A1 >
 
 template < typename T > void test( T&& );
 
-using values = f_on_type_list< my_types >::
-    template value_type< foreach, type_checker< int >::type_checker_impl >;
+using res = reduce< type_reduce_impl, my_types >;   
+using res_same = reduce< type_reduce_impl, my_same_types >;
 
-using res = call_f_on_a_type_list< my_types, reduce, type_reduce_impl >;
+using is = construct_integer_sequence< 10 >;
 
+#if 0
+using e = call_f_on_a_type_list< renderer_reflection,
+                                 find_if,
+                                 type_checker< vertex >::type_checker_impl >;
+#endif
 
-using is = construct_integer_sequence< 10 >; 
+// using e = find_if< type_checker< short >::type_checker_impl, int, char, bool, int >;
+
+using e = find_if< type_checker< short >::type_checker_impl, my_types >;
+
+// static_assert( is_same< e, true_type >::value_type::value == true, "" );
 
 int main()
 {
-    // test( is{} );
+    test( res_same{} );
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
