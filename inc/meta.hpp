@@ -20,7 +20,9 @@ struct false_type
     static constexpr bool value = false;
 };
 
-struct empty_type {};
+struct empty_type
+{
+};
 
 template < typename T, typename R > struct is_same
 {
@@ -47,7 +49,7 @@ namespace detail
     template < typename H, typename... Ts >
     constexpr type_list< Ts... > get_tail_impl( type_list< H, Ts... >&& );
 
-    template< typename... Ts >
+    template < typename... Ts >
     constexpr int get_len_impl( type_list< Ts... >&& )
     {
         return sizeof...( Ts );
@@ -63,8 +65,7 @@ using get_next_head = decltype( detail::get_next_head_impl( T{} ) );
 template < typename T >
 using get_tail = decltype( detail::get_tail_impl( T{} ) );
 
-template< typename T >
-constexpr auto get_len = detail::get_len_impl( T{} );
+template < typename T > constexpr auto get_len = detail::get_len_impl( T{} );
 
 template < template < typename... > class F > struct foreacher
 {
@@ -133,9 +134,8 @@ using find_if = typename finder< F >::template value_type< T >;
 template < template < typename... > class F > struct reducer
 {
     template < typename T >
-    using value_type = typename detail::reduce_dispatch< get_len< T > >::
-        template value_type<
-            F, empty_type, T >;
+    using value_type = typename detail::reduce_dispatch<
+        get_len< T > >::template value_type< F, empty_type, T >;
 };
 
 /**
