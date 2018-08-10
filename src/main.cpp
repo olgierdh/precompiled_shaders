@@ -209,7 +209,7 @@ using my_same_types = type_list< int, int, int >;
 template < typename A0, typename A1 > struct type_reduce_impl
 {
     using value_type =
-        typename conditional< is_same< A0, A1 >::value_type::value >::
+        typename conditional< is_same< A0, A1 >::value >::
             template value_type< A0, false_type >;
 };
 
@@ -247,7 +247,8 @@ using e1 = zip_with_integer_sequence< my_types >;
 
 int main()
 {
-    test( e1{} );
+    // test( channels{} );
+    channels< vertex_desc > ch;
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
@@ -281,6 +282,4 @@ int main()
         r.on_render();
         w.frame_end();
     }
-
-    return 0;
 }

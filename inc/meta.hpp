@@ -24,15 +24,21 @@ struct empty_type
 {
 };
 
-template < typename T, typename R > struct is_same
+namespace detail
 {
-    using value_type = false_type;
-};
+    template < typename T, typename R > struct is_same
+    {
+        using value_type = false_type;
+    };
 
-template < typename T > struct is_same< T, T >
-{
-    using value_type = true_type;
-};
+    template < typename T > struct is_same< T, T >
+    {
+        using value_type = true_type;
+    };
+} // namespace detail
+
+template< typename T, typename R >
+using is_same = typename detail::is_same< T, R >::value_type; 
 
 template < typename... T > struct type_list
 {
@@ -152,6 +158,26 @@ template < typename T, typename L >
 using push_back_on_list =
     decltype( detail::push_back_on_list_impl( T{}, L{} ) );
 
+
+namespace detail
+{
+    template < int N > struct construct_type_list_impl
+    {
+        template < typename H, typename T >
+        using value_type = typename construct_type_list_impl< N - 1 >::
+            template value_type< H, push_back_on_list< H, T > >;
+    };
+
+    template <> struct construct_type_list_impl< 0 >
+    {
+        template < typename H, typename T > using value_type = T;
+    };
+} // namespace detail
+
+template < int N, typename H >
+using construct_type_list = typename detail::construct_type_list_impl<
+    N >::template value_type< H, type_list<> >;
+
 constexpr int cmin( int lhs, int rhs )
 {
     if ( lhs < rhs )
@@ -163,15 +189,26 @@ constexpr int cmin( int lhs, int rhs )
 
 namespace detail
 {
-    template < template < typename... > class F > struct foreach_impl
+    template < int size > struct foreach_dispatcher
     {
-        template < typename T > using value_type = typename F< T >::value_type;
+        template < template < typename... > class F, typename R, typename T >
+        using value_type =
+            typename foreach_dispatcher< size - 1 >::template value_type<
+                F,
+                push_back_on_list< typename F< get_head< T > >::value_type, R >,
+                get_tail< T > >;
+    };
+
+    template <> struct foreach_dispatcher< 0 >
+    {
+        template < template < typename... > class F, typename R, typename T >
+        using value_type = R;
     };
 } // namespace detail
 
-template < template < typename... > class F, typename... Ts >
-using foreach = type_list<
-    typename detail::foreach_impl< F >::template value_type< Ts >... >;
+template < template < typename... > class F, typename T >
+using foreach = typename detail::foreach_dispatcher<
+    get_len< T > >::template value_type< F, type_list<>, T >;
 
 namespace detail
 {
@@ -310,7 +347,7 @@ template < typename T > struct type_comparator
 {
     template < typename R > struct comparator
     {
-        using value_type = typename is_same< T, R >::value_type;
+        using value_type = is_same< T, R >;
     };
 };
 
