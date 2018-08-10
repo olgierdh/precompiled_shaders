@@ -38,46 +38,201 @@ template < typename... T > struct type_list
 {
 };
 
+template < int... Is > struct integer_sequence
+{
+};
+
+namespace detail
+{
+    template < typename T > constexpr false_type is_integer_sequence( T&& );
+
+    template < int... Is >
+    constexpr true_type is_integer_sequence( integer_sequence< Is... >&& );
+} // namespace detail
+
+template < typename T >
+using is_integer_sequence = decltype( detail::is_integer_sequence( T{} ) );
+
+namespace detail
+{
+    template < int i, int... Is >
+    constexpr auto
+    push_back_on_integer_sequence_impl( int, integer_sequence< Is... > && )
+        -> integer_sequence< Is..., i >;
+} // namespace detail
+
+template < int U, typename T >
+using push_back_on_integer_sequence =
+    decltype( detail::push_back_on_integer_sequence_impl< U >( U, T{} ) );
+
+namespace detail
+{
+    template < int N > struct construct_integer_sequence_impl
+    {
+        template < int C, typename T >
+        using value_type = typename construct_integer_sequence_impl< N - 1 >::
+            template value_type< C + 1, push_back_on_integer_sequence< C, T > >;
+    };
+
+    template <> struct construct_integer_sequence_impl< 0 >
+    {
+        template < int C, typename T > using value_type = T;
+    };
+} // namespace detail
+
+template < int N >
+using construct_integer_sequence =
+    typename detail::construct_integer_sequence_impl<
+        N >::template value_type< 0, integer_sequence<> >;
+
+
+template < typename T, int index > struct type_with_index
+{
+    using value_type                 = T;
+    constexpr static int value_index = index;
+};
+
+namespace detail
+{
+    template < bool > struct enable_if
+    {
+        template < typename T = void > using value_type = T;
+    };
+
+    template <> struct enable_if< false >
+    {
+    };
+} // namespace detail
+
+template < bool c, typename T = void >
+using enable_if = typename detail::enable_if< c >::template value_type< T >;
+
 namespace detail
 {
     template < typename H, typename... Ts >
     constexpr H get_head_impl( type_list< H, Ts... >&& );
 
-    template < typename H, typename H1, typename... Ts >
-    constexpr H1 get_next_head_impl( type_list< H, H1, Ts... >&& );
+    template < int H, int... Ts >
+    constexpr int get_head_impl( integer_sequence< H, Ts... >&& )
+    {
+        return H;
+    }
 
     template < typename H, typename... Ts >
     constexpr type_list< Ts... > get_tail_impl( type_list< H, Ts... >&& );
+
+    template < int H, int... Ts >
+    constexpr integer_sequence< Ts... >
+    get_tail_impl( integer_sequence< H, Ts... >&& );
 
     template < typename... Ts >
     constexpr int get_len_impl( type_list< Ts... >&& )
     {
         return sizeof...( Ts );
     }
+
+    template < typename T, typename... Ts >
+    constexpr auto push_back_on_list_impl( T&&, type_list< Ts... > && )
+        -> type_list< Ts..., T >;
 } // namespace detail
 
+/** needed because of the compilers bug for matching the aliased templates */
 template < typename T >
 using get_head = decltype( detail::get_head_impl( T{} ) );
 
 template < typename T >
-using get_next_head = decltype( detail::get_next_head_impl( T{} ) );
+using get_tail = decltype( detail::get_tail_impl( T{} ) );
 
 template < typename T >
-using get_tail = decltype( detail::get_tail_impl( T{} ) );
+constexpr auto get_head_int = detail::get_head_impl( T{} );
 
 template < typename T > constexpr auto get_len = detail::get_len_impl( T{} );
 
-template < template < typename... > class F > struct foreacher
+template < typename T, typename L >
+using push_back_on_list =
+    decltype( detail::push_back_on_list_impl( T{}, L{} ) );
+
+constexpr int cmin( int lhs, int rhs )
 {
-    template < typename T > using value_type = typename F< T >::value_type;
-};
+    if ( lhs < rhs )
+    {
+        return lhs;
+    }
+    return rhs;
+}
+
+namespace detail
+{
+    template < template < typename... > class F > struct foreach_impl
+    {
+        template < typename T > using value_type = typename F< T >::value_type;
+    };
+} // namespace detail
 
 template < template < typename... > class F, typename... Ts >
-using foreach =
-    type_list< typename foreacher< F >::template value_type< Ts >... >;
+using foreach = type_list<
+    typename detail::foreach_impl< F >::template value_type< Ts >... >;
 
-// Prototype for calling f with a functor on a type_list
-template < typename T > struct f_on_type_list;
+namespace detail
+{
+    template < int size > struct transform_dispatch
+    {
+        template < template < typename... > class F,
+                   typename R,
+                   typename T0,
+                   typename T1 >
+        using value_type =
+            typename transform_dispatch< size - 1 >::template value_type<
+                F,
+                push_back_on_list<
+                    typename F< get_head< T0 >, get_head< T1 > >::value_type,
+                    R >,
+                get_tail< T0 >,
+                get_tail< T1 > >;
+    };
+
+    template <> struct transform_dispatch< 0 >
+    {
+        template < template < typename... > class F,
+                   typename R,
+                   typename T0,
+                   typename T1 >
+        using value_type = R;
+    };
+} // namespace detail
+
+template < template < typename... > class F, typename T0, typename T1 >
+using transform = typename detail::transform_dispatch< cmin(
+    get_len< T0 >,
+    get_len< T1 > ) >::template value_type< F, type_list<>, T0, T1 >;
+
+
+namespace detail
+{
+    template < int size > struct zip_with_index_dispatch
+    {
+        template < typename R, typename T0, typename T1 >
+        using value_type =
+            typename zip_with_index_dispatch< size - 1 >::template value_type<
+                push_back_on_list<
+                    type_with_index< get_head< T0 >, get_head_int< T1 > >,
+                    R >,
+                get_tail< T0 >,
+                get_tail< T1 > >;
+    };
+
+    template <> struct zip_with_index_dispatch< 0 >
+    {
+        template < typename R, typename T0, typename T1 > using value_type = R;
+    };
+} // namespace detail
+
+template < typename T >
+using zip_with_integer_sequence =
+    typename detail::zip_with_index_dispatch< get_len< T > >::
+        template value_type< type_list<>,
+                             T,
+                             construct_integer_sequence< get_len< T > > >;
 
 namespace detail
 {
@@ -145,46 +300,23 @@ template < template < typename... > class F, typename T >
 using reduce = typename reducer< F >::template value_type< T >;
 
 
-// integer sequences
-template < int... Is > struct integer_sequence
+// bunch of helper structures
+
+/**
+ * Generates the comparator for any given type.
+ * Can be used against the find_if
+ */
+template < typename T > struct type_comparator
 {
+    template < typename R > struct comparator
+    {
+        using value_type = typename is_same< T, R >::value_type;
+    };
 };
 
-namespace detail
-{
-    template < int U, int... Ts >
-    using push_back = integer_sequence< Ts..., U >;
+/**
+ * Syntactic sugar for finding a given type within the given type list
+ */
+template < typename T, typename H >
+using find_type_in = find_if< type_comparator< T >::template comparator, H >;
 
-    template < typename T > struct push_back_on_integer_sequence_impl;
-
-    template < int... Ts >
-    struct push_back_on_integer_sequence_impl< integer_sequence< Ts... > >
-    {
-        template < int U > using value_type = push_back< U, Ts... >;
-    };
-} // namespace detail
-
-template < int U, typename T >
-using push_back_on_integer_sequence =
-    typename detail::push_back_on_integer_sequence_impl<
-        T >::template value_type< U >;
-
-namespace detail
-{
-    template < int N > struct construct_integer_sequence_impl
-    {
-        template < int C, typename T >
-        using value_type = typename construct_integer_sequence_impl< N - 1 >::
-            template value_type< C + 1, push_back_on_integer_sequence< C, T > >;
-    };
-
-    template <> struct construct_integer_sequence_impl< 0 >
-    {
-        template < int C, typename T > using value_type = T;
-    };
-} // namespace detail
-
-template < int N >
-using construct_integer_sequence =
-    typename detail::construct_integer_sequence_impl<
-        N >::template value_type< 0, integer_sequence<> >;

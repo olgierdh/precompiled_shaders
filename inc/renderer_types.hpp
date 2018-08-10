@@ -24,7 +24,7 @@ struct vertex
     vec3f m_color;
 };
 
-/* meta description of types */
+/* meta description of types not very beautiful but handy later on */
 using vec3f_desc =
     decltype( make_struct_desc( vec3f{},
                                 "vec3f"_tstr,
@@ -49,3 +49,16 @@ using vertex_desc = decltype(
 /* list of types registered for renderer system */
 using renderer_reflection = type_list< vec3f_desc, vec4f_desc, vertex_desc >;
 
+/** bunch of helpers to generate the vertex array object from the vertex
+ * description */
+
+
+// iterate over the fields and replace the types with apropriate generator
+// ran afterwards will give us the configuration for the vertex arrays
+
+
+struct field_generator
+{
+    //    template< typename T >
+    //    using value_type =
+};

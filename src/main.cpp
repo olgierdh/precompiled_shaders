@@ -205,13 +205,6 @@ struct glew_context
 using my_types = type_list< int, float, char, int, float, float, char, int >;
 using my_same_types = type_list< int, int, int >;
 
-template < typename T > struct type_checker
-{
-    template < typename R > struct type_checker_impl
-    {
-        using value_type = typename is_same< T, R >::value_type;
-    };
-};
 
 template < typename A0, typename A1 > struct type_reduce_impl
 {
@@ -245,13 +238,16 @@ using e = call_f_on_a_type_list< renderer_reflection,
 
 // using e = find_if< type_checker< short >::type_checker_impl, int, char, bool, int >;
 
-using e = find_if< type_checker< short >::type_checker_impl, my_types >;
+using e = find_if< type_comparator< short >::template comparator, my_types >;
 
 // static_assert( is_same< e, true_type >::value_type::value == true, "" );
 
+using e1 = zip_with_integer_sequence< my_types >;
+
+
 int main()
 {
-    test( res_same{} );
+    test( e1{} );
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
