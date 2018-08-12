@@ -79,38 +79,43 @@ template < typename U > struct generate_field_type
         is_same< construct_type_list< get_len< U >, get_head< U > >, U >;
 };
 
-template< int size >
-struct type_size
+template < int size > struct type_size
 {
     constexpr static auto value = size;
 };
 
-template< typename LHS, typename RHS > struct reducer_field_sizeof 
+template < typename LHS, typename RHS > struct reducer_field_sizeof
 {
     using value_type = type_size< LHS::value + sizeof( RHS ) >;
 };
 
-template< typename RHS > struct reducer_field_sizeof< empty_type, RHS >
+template < typename RHS > struct reducer_field_sizeof< empty_type, RHS >
 {
     using value_type = type_size< sizeof( RHS ) >;
 };
 
-template< typename T > struct calculate_field_size 
+template < typename T > struct calculate_field_size
 {
     using value_type = reduce< reducer_field_sizeof, T >;
 };
 
-template< typename T > struct channel 
+enum class gl_type
 {
-
+    float_type
 };
 
-template< typename T > struct channels
+struct channel
+{
+    gl_type m_type;
+    int m_size;
+};
+
+template < typename T > struct channels
 {
     using flatten_fields_list =
         foreach< replace_with_list_fields, typename T::field_list >;
-    
-    channels() 
+
+    channels()
     {
         logger::log( "Test: ", get_no_channels() );
     }
@@ -118,6 +123,23 @@ template< typename T > struct channels
     static constexpr int get_no_channels()
     {
         return get_len< flatten_fields_list >;
+    }
+
+    template < typename A > static channel generate_channel( A&& )
+    {
+        constexpr auto size = reduce< reducer_field_sizeof, A >::value;
+        return channel{gl_type::float_type, size};
+    }
+
+    template < typename... A >
+    static void generate_channels( type_list< A... >&& )
+    {
+        channel c[sizeof...( A )] = {generate_channel( A{} )...};
+
+        for ( int i = 0; i < static_cast< int >( sizeof...( A ) ); ++i )
+        {
+            logger::log( "Size: ", c[i].m_size );
+        }
     }
 };
 
@@ -137,5 +159,4 @@ using all_types_same = is_same<
     flatten_reference_type_list >;
 static_assert( is_same< all_types_same, true_type >::value,
                "All types within sub structures must be the same!" );
-
 
