@@ -147,7 +147,7 @@ namespace nv
             struct dispatch< N, promote< F, C > >
             {
                 template < typename... T >
-                using f = typename dispatch< 1, C >::template f< F< T >... >;
+                using f = typename dispatch< 1, C >::template f< F< T... > >;
             };
         }; // namespace detail
 
@@ -158,13 +158,12 @@ namespace nv
     } // namespace meta
 } // namespace nv
 
-template < typename T >
-using calc_sizeof = nv::meta::int_type< sizeof( T ) >;
+template < typename... T >
+using calc_sizeof = nv::meta::int_type< ( sizeof( T ) + ... ) >;
 
 using test_replace = nv::meta::replace< int >;
 using data         = nv::meta::call< nv::meta::unpack< test_replace >,
                              nv::meta::type_list< int, float, char > >;
 
-using test_reduce =
-    nv::meta::promote< calc_sizeof, nv::meta::reduce< nv::meta::sum > >;
-using test_reduce_data = nv::meta::call< test_reduce, float, int, char, bool >;
+using test_promote     = nv::meta::promote< calc_sizeof >;
+using test_promote_data = nv::meta::call< test_promote, float, int, char, bool >;

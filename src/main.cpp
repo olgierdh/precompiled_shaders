@@ -248,7 +248,7 @@ using e1 = zip_with_integer_sequence< my_types >;
 
 int main()
 {
-    test( test_reduce_data{} );
+    test( test_promote_data{} );
     using the_channels = channels< vertex_desc >;
     the_channels::generate_channels( the_channels::flatten_fields_list{} );
 
