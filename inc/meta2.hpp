@@ -23,6 +23,12 @@ namespace nv
         {
         };
 
+        template < typename F = listify<>, typename C = listify<> >
+        struct zip_with_index
+        {
+        };
+
+
         struct null_type
         {
         };
@@ -151,6 +157,66 @@ namespace nv
             };
         }; // namespace detail
 
+        template < int... Is > struct index_sequence
+        {
+        };
+
+        namespace detail
+        {
+            template < int N, int... Is >
+            constexpr auto
+            push_back_index_sequence( int&&, index_sequence< Is... > && )
+                -> index_sequence< Is..., N >;
+
+            template < int S, int C > struct make_index_sequence_impl
+            {
+                template < typename T >
+                using value_type =
+                    typename make_index_sequence_impl< S, C + 1 >::
+                        template value_type< decltype(
+                            push_back_index_sequence< C >( C, T{} ) ) >;
+            };
+
+            template < int S > struct make_index_sequence_impl< S, S >
+            {
+                template < typename T > using value_type = T;
+            };
+        }; // namespace detail
+
+        template < int S >
+        using make_index_sequence =
+            typename detail::make_index_sequence_impl< S, 0 >::
+                template value_type< index_sequence<> >;
+
+        namespace detail
+        {
+            template < int N, typename T = make_index_sequence< N > >
+            struct zip_with_index_impl;
+
+            template < int N, int... Is >
+            struct zip_with_index_impl< N, index_sequence< Is... > >
+            {
+                template < typename F,
+                           template < typename... > class C,
+                           typename... Ts >
+                using f =
+                    C< typename dispatch< 2, F >::template f< int_type< Is >,
+                                                              Ts >... >;
+            };
+
+            template < int N, typename F, typename C >
+            struct dispatch< N, zip_with_index< F, C > >
+            {
+                template < typename... Ts >
+                using f =
+                    typename zip_with_index_impl< sizeof...( Ts ) >::template f<
+                        F,
+                        dispatch< sizeof...( Ts ), C >::template f,
+                        Ts... >;
+            };
+        } // namespace detail
+
+
         /** call the meta functor */
         template < typename F, typename... Ts >
         using call = typename detail::dispatch< sizeof...( Ts ),
@@ -161,9 +227,10 @@ namespace nv
 template < typename... T >
 using calc_sizeof = nv::meta::int_type< ( sizeof( T ) + ... ) >;
 
-using test_replace = nv::meta::replace< int >;
+using test_replace = nv::meta::zip_with_index<>;
 using data         = nv::meta::call< nv::meta::unpack< test_replace >,
                              nv::meta::type_list< int, float, char > >;
 
-using test_promote     = nv::meta::promote< calc_sizeof >;
-using test_promote_data = nv::meta::call< test_promote, float, int, char, bool >;
+using test_promote = nv::meta::promote< calc_sizeof >;
+using test_promote_data =
+    nv::meta::call< test_promote, float, int, char, bool >;

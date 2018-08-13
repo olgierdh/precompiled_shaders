@@ -248,11 +248,9 @@ using e1 = zip_with_integer_sequence< my_types >;
 
 int main()
 {
-    test( test_promote_data{} );
+    test( data{} );
     using the_channels = channels< vertex_desc >;
     the_channels::generate_channels( the_channels::flatten_fields_list{} );
-
-
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
