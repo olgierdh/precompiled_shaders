@@ -12,6 +12,7 @@
 #include "renderer.hpp"
 
 #include "meta.hpp"
+#include "meta2.hpp"
 #include "type_system.hpp"
 #include "renderer_types.hpp"
 
@@ -247,9 +248,11 @@ using e1 = zip_with_integer_sequence< my_types >;
 
 int main()
 {
-    // test( channels{} );
+    test( test_reduce_data{} );
     using the_channels = channels< vertex_desc >;
     the_channels::generate_channels( the_channels::flatten_fields_list{} );
+
+
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )

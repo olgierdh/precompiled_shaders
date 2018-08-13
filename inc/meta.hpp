@@ -44,6 +44,13 @@ template < typename... T > struct type_list
 {
 };
 
+template< typename T, T v >
+struct valuer
+{
+    using value_type = T;
+    constexpr static auto value = v;
+};
+
 template < int... Is > struct integer_sequence
 {
 };
