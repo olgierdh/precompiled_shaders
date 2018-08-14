@@ -15,6 +15,8 @@ namespace nv
         struct identity {};
         template < typename C = identity > struct listify {};
         template < typename R, typename C = listify<> > struct replace {};
+        template < typename F, typename C = listify<> > 
+        struct foreach {};
         template < typename T, typename C = identity > struct always {};
         template < typename C > struct unpack {};
         template < template < typename... > class F, typename C = identity >
@@ -30,6 +32,16 @@ namespace nv
         {
         };
 
+        namespace detail
+        {
+            template < typename T0, typename... Ts > struct at0_impl
+            {
+                using value_type = T0;
+            };
+        } // namespace detail
+
+        template < typename... Ts >
+        using at0 = typename detail::at0_impl< Ts... >::value_type;
         /**
          * Example of the reduce functor.
          * It can use a little bit of sfineae in order to catch the first call
@@ -153,6 +165,34 @@ namespace nv
 
         namespace detail
         {
+            template < template < typename... > class F, typename C >
+            struct dispatch< 1, promote< F, C > >
+            {
+                template < typename T >
+                using f = typename dispatch< 1, C >::template f< F< T > >;
+            };
+            
+            template < template < typename... > class F, typename C >
+            struct dispatch< 2, promote< F, C > >
+            {
+                template < typename T0, typename T1 >
+                using f = typename dispatch< 1, C >::template f< F< T0, T1 > >;
+            };
+            
+            template < template < typename... > class F, typename C >
+            struct dispatch< 3, promote< F, C > >
+            {
+                template < typename T0, typename T1, typename T2 >
+                using f = typename dispatch< 1, C >::template f< F< T0, T1, T2 > >;
+            };
+           
+            template < template < typename... > class F, typename C >
+            struct dispatch< 4, promote< F, C > >
+            {
+                template < typename T0, typename T1, typename T2, typename T3 >
+                using f = typename dispatch< 1, C >::template f< F< T0, T1, T2, T3 > >;
+            };
+
             template < int N, template < typename... > class F, typename C >
             struct dispatch< N, promote< F, C > >
             {
@@ -280,6 +320,19 @@ namespace nv
             };
         } // namespace detail
 
+
+        namespace detail
+        {
+            template < int N, typename F, typename C >
+            struct dispatch< N, foreach< F, C > >
+            {
+                template < typename... Ts >
+                using f = typename dispatch< sizeof...( Ts ), C >::template f<
+                    typename dispatch< 1, F >::template f< Ts >... >;
+            };
+        } // namespace detail
+
+
         /** call the meta functor */
         template < typename F, typename... Ts >
         using call = typename detail::dispatch< sizeof...( Ts ),
@@ -287,16 +340,10 @@ namespace nv
     } // namespace meta
 } // namespace nv
 
-template < typename... T >
-using calc_sizeof = nv::meta::int_type< ( sizeof( T ) + ... ) >;
-
 using test_replace = nv::meta::zip_with_index<>;
 using data         = nv::meta::call< nv::meta::unpack< test_replace >,
                              nv::meta::type_list< int, float, char > >;
 
-using test_promote = nv::meta::promote< calc_sizeof >;
-using test_promote_data =
-    nv::meta::call< test_promote, float, int, char, bool >;
 
 using test_reverse      = nv::meta::reverse<>;
 using test_reverse_data = nv::meta::call< test_reverse,

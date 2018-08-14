@@ -12,7 +12,6 @@
 #include "renderer.hpp"
 
 #include "meta.hpp"
-#include "meta2.hpp"
 #include "type_system.hpp"
 #include "renderer_types.hpp"
 
@@ -203,10 +202,18 @@ struct glew_context
     bool m_is_initialized;
 };
 
+template< typename T >
+void test( T&& );
+
+
 int main()
 {
     using the_channels = channels< vertex_desc >;
-    the_channels::generate_channels( the_channels::flatten_fields_list{} );
+    
+    //test( vertex_desc{} );
+    //test( the_channels::flatten_fields_list{} );
+
+    the_channels::generate_channels();
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )

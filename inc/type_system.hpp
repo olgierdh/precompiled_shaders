@@ -7,7 +7,6 @@
  * Add ablity to describe types and generate code using that description
  * i.e. generate vertex buffers/arrays using vertex type
  */
-
 template < typename T, typename S, typename F > struct struct_desc
 {
     using value_type = T;
@@ -32,15 +31,16 @@ template < auto f, typename S, typename D > struct field_desc
     using type_desc                  = D;
 };
 
-template < typename... Ts > using fields = type_list< Ts... >;
+template < typename... Ts > using fields = nv::meta::type_list< Ts... >;
 
 template < typename T, typename S, typename D >
-constexpr auto make_field_desc( T&& t, S &&, D&& ) -> field_desc< T{}, S, D >;
+constexpr auto make_field_desc( T&& t, S&&, D && ) -> field_desc< T{}, S, D >;
 
-template< typename T, typename S >
-constexpr auto make_field_desc( T&& t, S && ) -> field_desc< T{}, S, empty_type >;
+template < typename T, typename S >
+constexpr auto
+make_field_desc( T&& t, S && ) -> field_desc< T{}, S, nv::meta::null_type >;
 
 template < typename T, typename S, typename... Fs >
 constexpr auto make_struct_desc( T&&, S&&, Fs&&... )
-    -> struct_desc< T, S, type_list< Fs... > >;
+    -> struct_desc< T, S, nv::meta::type_list< Fs... > >;
 
