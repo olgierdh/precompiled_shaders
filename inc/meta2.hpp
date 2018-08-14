@@ -17,28 +17,32 @@ namespace nv
         template < typename R, typename C = listify<> > struct replace {};
         template < typename T, typename C = identity > struct always {};
         template < typename C > struct unpack {};
-        // clang-format on
         template < template < typename... > class F, typename C = identity >
-        struct reduce
-        {
-        };
-
+        struct reduce {};
         template < typename F = listify<>, typename C = listify<> >
-        struct zip_with_index
+        struct zip_with_index {};
+        // clang-format on
+        template < typename C = listify<> > struct reverse
         {
         };
-
 
         struct null_type
         {
         };
 
-
+        /**
+         * Example of the reduce functor.
+         * It can use a little bit of sfineae in order to catch the first call
+         */
         template < typename LHS, typename RHS > struct sum
         {
             using value_type = int_type< LHS::value + RHS::value >;
         };
 
+        /**
+         * Implementation of the sum for the first call, just ignore null type
+         * on the lhs.
+         */
         template < typename RHS > struct sum< null_type, RHS >
         {
             using value_type = RHS;
@@ -152,8 +156,8 @@ namespace nv
             template < int N, template < typename... > class F, typename C >
             struct dispatch< N, promote< F, C > >
             {
-                template < typename... T >
-                using f = typename dispatch< 1, C >::template f< F< T... > >;
+                template < typename... Ts >
+                using f = typename dispatch< 1, C >::template f< F< Ts... > >;
             };
         }; // namespace detail
 
@@ -216,6 +220,64 @@ namespace nv
             };
         } // namespace detail
 
+        namespace detail
+        {
+            template < typename... Ts > constexpr int find_size()
+            {
+                constexpr int len = sizeof...( Ts );
+
+                if ( len > 3 )
+                {
+                    return 4;
+                }
+
+                return len;
+            }
+
+            template < typename C, typename... Ts > struct reverse_impl
+            {
+                template < typename... Us >
+                using f = typename dispatch< sizeof...( Ts ) + sizeof...( Us ),
+                                             C >::template f< Ts..., Us... >;
+            };
+
+            template < typename C > struct dispatch< 1, reverse< C > >
+            {
+                template < typename T0 >
+                using f = typename dispatch< 1, C >::template f< T0 >;
+            };
+
+            template < typename C > struct dispatch< 2, reverse< C > >
+            {
+                template < typename T0, typename T1 >
+                using f = typename dispatch< 2, C >::template f< T1, T0 >;
+            };
+
+            template < typename C > struct dispatch< 3, reverse< C > >
+            {
+                template < typename T0, typename T1, typename T2 >
+                using f = typename dispatch< 3, C >::template f< T2, T1, T0 >;
+            };
+
+            template < typename C > struct dispatch< 4, reverse< C > >
+            {
+                template < typename T0,
+                           typename T1,
+                           typename T2,
+                           typename... Ts >
+                using f = typename dispatch< find_size< Ts... >() + 1,
+                                             reverse< promote< reverse_impl > > >::
+                    template f< Ts..., C >::template f< T2, T1, T0 >;
+            };
+
+            template < int N, typename C > struct dispatch< N, reverse< C > >
+            {
+                template < typename... Ts >
+                using f =
+                    typename dispatch< find_size< Ts... >(),
+                                       reverse< C > >::template f< Ts... >;
+            };
+        } // namespace detail
 
         /** call the meta functor */
         template < typename F, typename... Ts >
@@ -234,3 +296,10 @@ using data         = nv::meta::call< nv::meta::unpack< test_replace >,
 using test_promote = nv::meta::promote< calc_sizeof >;
 using test_promote_data =
     nv::meta::call< test_promote, float, int, char, bool >;
+
+using test_reverse = nv::meta::reverse<>;
+using test_reverse_data = nv::meta::call< test_reverse,
+                                          nv::meta::int_type< 0 >,
+                                          nv::meta::int_type< 1 >,
+                                          nv::meta::int_type< 2 >,
+                                         nv::meta::int_type< 3 > >;

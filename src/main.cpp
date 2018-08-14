@@ -203,52 +203,8 @@ struct glew_context
     bool m_is_initialized;
 };
 
-using my_types = type_list< int, float, char, int, float, float, char, int >;
-using my_same_types = type_list< int, int, int >;
-
-
-template < typename A0, typename A1 > struct type_reduce_impl
-{
-    using value_type =
-        typename conditional< is_same< A0, A1 >::value >::
-            template value_type< A0, false_type >;
-};
-
-template< typename A1 > struct type_reduce_impl< empty_type, A1 >
-{
-    using value_type = A1;
-};
-
-template < typename A1 > struct type_reduce_impl< false_type, A1 >
-{
-    using value_type = false_type;
-};
-
-template < typename T > void test( T&& );
-
-using res = reduce< type_reduce_impl, my_types >;   
-using res_same = reduce< type_reduce_impl, my_same_types >;
-
-using is = construct_integer_sequence< 10 >;
-
-#if 0
-using e = call_f_on_a_type_list< renderer_reflection,
-                                 find_if,
-                                 type_checker< vertex >::type_checker_impl >;
-#endif
-
-// using e = find_if< type_checker< short >::type_checker_impl, int, char, bool, int >;
-
-using e = find_if< type_comparator< short >::template comparator, my_types >;
-
-// static_assert( is_same< e, true_type >::value_type::value == true, "" );
-
-using e1 = zip_with_integer_sequence< my_types >;
-
-
 int main()
 {
-    test( data{} );
     using the_channels = channels< vertex_desc >;
     the_channels::generate_channels( the_channels::flatten_fields_list{} );
 
