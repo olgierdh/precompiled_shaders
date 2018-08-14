@@ -377,6 +377,7 @@ namespace nv
     } // namespace meta
 } // namespace nv
 
+#if 0
 using test_replace = nv::meta::zip_with_index<>;
 using data         = nv::meta::call< nv::meta::unpack< test_replace >,
                              nv::meta::type_list< int, float, char > >;
@@ -388,3 +389,4 @@ using test_reverse_data = nv::meta::call< test_reverse,
                                           nv::meta::int_type< 1 >,
                                           nv::meta::int_type< 2 >,
                                           nv::meta::int_type< 3 > >;
+#endif
