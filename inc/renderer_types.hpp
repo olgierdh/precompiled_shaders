@@ -168,10 +168,11 @@ template < typename T > struct channels
   private:
     template < typename A > static channel generate_channel( A&& )
     {
-        constexpr auto size = nv::meta::call< nv::meta::unpack< nv::meta::foreach<
-                                      nv::meta::promote< get_value_type >,
-                                      nv::meta::promote< calc_sizeof > > >,
-                                  A >::value;
+        constexpr auto size =
+            nv::meta::call< nv::meta::unpack< nv::meta::foreach<
+                                nv::meta::promote< get_value_type >,
+                                nv::meta::promote< calc_sizeof > > >,
+                            A >::value;
 
         // reduce, yeah I could generate second list and check if equal, but
         // this is more fun.
