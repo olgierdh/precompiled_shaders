@@ -265,9 +265,10 @@ namespace nv
                            typename T1,
                            typename T2,
                            typename... Ts >
-                using f = typename dispatch< find_size< Ts... >() + 1,
-                                             reverse< promote< reverse_impl > > >::
-                    template f< Ts..., C >::template f< T2, T1, T0 >;
+                using f =
+                    typename dispatch< find_size< Ts... >() + 1,
+                                       reverse< promote< reverse_impl > > >::
+                        template f< Ts..., C >::template f< T2, T1, T0 >;
             };
 
             template < int N, typename C > struct dispatch< N, reverse< C > >
@@ -297,9 +298,9 @@ using test_promote = nv::meta::promote< calc_sizeof >;
 using test_promote_data =
     nv::meta::call< test_promote, float, int, char, bool >;
 
-using test_reverse = nv::meta::reverse<>;
+using test_reverse      = nv::meta::reverse<>;
 using test_reverse_data = nv::meta::call< test_reverse,
                                           nv::meta::int_type< 0 >,
                                           nv::meta::int_type< 1 >,
                                           nv::meta::int_type< 2 >,
-                                         nv::meta::int_type< 3 > >;
+                                          nv::meta::int_type< 3 > >;
