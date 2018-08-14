@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "type_system.hpp"
 #include "logger.hpp"
 
@@ -160,7 +162,7 @@ template < typename T > struct channels
             flatten_fields_list >::value;
     }
 
-    static void generate_channels()
+    static auto generate_channels()
     {
         return generate_channels_impl( flatten_fields_list{} );
     }
@@ -189,15 +191,11 @@ template < typename T > struct channels
     }
 
     template < typename... A >
-    static void generate_channels_impl( nv::meta::type_list< A... >&& )
+    static auto generate_channels_impl( nv::meta::type_list< A... >&& )
     {
-        channel c[sizeof...( A )] = {generate_channel( A{} )...};
-
-        for ( int i = 0; i < static_cast< int >( sizeof...( A ) ); ++i )
-        {
-            logger::log( "Size: ", c[i].m_size,
-                         " type: ", static_cast< int >( c[i].m_type ) );
-        }
+        std::array< channel, sizeof...( A ) > channels = {
+            generate_channel( A{} )...};
+        return channels;
     }
 };
 

@@ -209,7 +209,12 @@ int main()
     //test( vertex_desc{} );
     //test( the_channels::flatten_fields_list{} );
 
-    the_channels::generate_channels();
+    const auto channels = the_channels::generate_channels();
+    
+    for( const auto& c : channels )
+    {
+        logger::log( "channel size: ", c.m_size );
+    }
 
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
