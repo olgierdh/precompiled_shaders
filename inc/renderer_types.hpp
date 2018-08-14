@@ -19,10 +19,19 @@ struct vec4f
     float w;
 };
 
+struct vec4c
+{
+    char r;
+    char g;
+    char b;
+    char a;
+};
+
 struct vertex
 {
     vec4f m_position;
-    vec3f m_color;
+    vec4c m_color0;
+    vec3f m_color1;
 };
 
 /* meta description of types not very beautiful but handy later on */
@@ -40,12 +49,21 @@ using vec4f_desc =
                                 make_field_desc( &vec4f::y, "y"_tstr ),
                                 make_field_desc( &vec4f::z, "z"_tstr ),
                                 make_field_desc( &vec4f::w, "w"_tstr ) ) );
+using vec4c_desc =
+    decltype( make_struct_desc( vec4c{},
+                                "vec4c"_tstr,
+                                make_field_desc( &vec4c::r, "r"_tstr ),
+                                make_field_desc( &vec4c::g, "g"_tstr ),
+                                make_field_desc( &vec4c::b, "b"_tstr ),
+                                make_field_desc( &vec4c::a, "a"_tstr ) ) );
+
 
 using vertex_desc = decltype( make_struct_desc(
     vertex{},
     "vertex"_tstr,
     make_field_desc( &vertex::m_position, "m_position"_tstr, vec4f_desc{} ),
-    make_field_desc( &vertex::m_color, "m_color"_tstr, vec3f_desc{} ) ) );
+    make_field_desc( &vertex::m_color0, "m_color0"_tstr, vec4c_desc{} ),
+    make_field_desc( &vertex::m_color1, "m_color1"_tstr, vec3f_desc{} ) ) );
 
 /* list of types registered for renderer system */
 using renderer_reflection =
@@ -103,6 +121,9 @@ struct channel
 template < typename... T >
 using calc_sizeof = nv::meta::int_type< ( sizeof( T ) + ... ) >;
 
+template < typename... T >
+using calc_len = nv::meta::int_type< sizeof...( T ) >;
+
 template < typename LHS, typename RHS > struct type_equality
 {
     using value_type =
@@ -134,7 +155,9 @@ template < typename T > struct channels
 
     static constexpr int get_no_channels()
     {
-        return 2;
+        return nv::meta::call<
+            nv::meta::unpack< nv::meta::promote< calc_len > >,
+            flatten_fields_list >::value;
     }
 
     static void generate_channels()
@@ -145,10 +168,13 @@ template < typename T > struct channels
   private:
     template < typename A > static channel generate_channel( A&& )
     {
-        constexpr auto size = nv::meta::call<
-            nv::meta::unpack< nv::meta::promote< calc_sizeof > >, A >::value;
+        constexpr auto size = nv::meta::call< nv::meta::unpack< nv::meta::foreach<
+                                      nv::meta::promote< get_value_type >,
+                                      nv::meta::promote< calc_sizeof > > >,
+                                  A >::value;
 
-        // reduce
+        // reduce, yeah I could generate second list and check if equal, but
+        // this is more fun.
         using the_type =
             nv::meta::call< nv::meta::unpack< nv::meta::foreach<
                                 nv::meta::promote< get_value_type >,
