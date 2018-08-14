@@ -202,10 +202,6 @@ struct glew_context
     bool m_is_initialized;
 };
 
-template< typename T >
-void test( T&& );
-
-
 int main()
 {
     using the_channels = channels< vertex_desc >;

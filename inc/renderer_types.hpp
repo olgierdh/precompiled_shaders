@@ -68,8 +68,31 @@ using get_field_list = typename T::type_desc::field_list;
 
 enum class gl_type
 {
-    float_type
+    float_type,
+    int_type,
+    char_type,
+    unknown
 };
+
+template < typename T > constexpr gl_type get_gl_type( T&& )
+{
+    using type = T;
+
+    if constexpr ( nv::meta::is_same< type, float >::value )
+    {
+        return gl_type::float_type;
+    }
+    else if constexpr ( nv::meta::is_same< type, int >::value )
+    {
+        return gl_type::int_type;
+    }
+    else if constexpr ( nv::meta::is_same< type, char >::value )
+    {
+        return gl_type::char_type;
+    }
+
+    return gl_type::unknown;
+}
 
 struct channel
 {
@@ -79,6 +102,23 @@ struct channel
 
 template < typename... T >
 using calc_sizeof = nv::meta::int_type< ( sizeof( T ) + ... ) >;
+
+template < typename LHS, typename RHS > struct type_equality
+{
+    using value_type =
+        typename nv::meta::conditional< nv::meta::is_same< LHS, RHS >::value >::
+            template value_type< nv::meta::false_type, LHS >;
+};
+
+template < typename RHS > struct type_equality< nv::meta::false_type, RHS >
+{
+    using value_type = nv::meta::false_type;
+};
+
+template < typename RHS > struct type_equality< nv::meta::null_type, RHS >
+{
+    using value_type = RHS;
+};
 
 template < typename T > struct channels
 {
@@ -107,9 +147,20 @@ template < typename T > struct channels
     {
         constexpr auto size = nv::meta::call<
             nv::meta::unpack< nv::meta::promote< calc_sizeof > >, A >::value;
-        return channel{gl_type::float_type, size};
+
+        // reduce
+        using the_type =
+            nv::meta::call< nv::meta::unpack< nv::meta::foreach<
+                                nv::meta::promote< get_value_type >,
+                                nv::meta::reduce< type_equality > > >,
+                            A >;
+        static_assert(
+            nv::meta::is_same< nv::meta::false_type, the_type >::value != true,
+            "Channel's types are not equal!" );
+
+        return channel{get_gl_type( the_type{} ), size};
     }
-    
+
     template < typename... A >
     static void generate_channels_impl( nv::meta::type_list< A... >&& )
     {
@@ -117,7 +168,8 @@ template < typename T > struct channels
 
         for ( int i = 0; i < static_cast< int >( sizeof...( A ) ); ++i )
         {
-            logger::log( "Size: ", c[i].m_size );
+            logger::log( "Size: ", c[i].m_size,
+                         " type: ", static_cast< int >( c[i].m_type ) );
         }
     }
 };

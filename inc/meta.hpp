@@ -4,11 +4,12 @@ namespace nv
 {
     namespace meta
     {
+        template < typename T > void test( T&& );
+
         template < int I > struct int_type
         {
             constexpr static int value = I;
         };
-
 
         // clang-format off
         template < typename... Ts > struct type_list {};
@@ -32,16 +33,6 @@ namespace nv
         {
         };
 
-        namespace detail
-        {
-            template < typename T0, typename... Ts > struct at0_impl
-            {
-                using value_type = T0;
-            };
-        } // namespace detail
-
-        template < typename... Ts >
-        using at0 = typename detail::at0_impl< Ts... >::value_type;
         /**
          * Example of the reduce functor.
          * It can use a little bit of sfineae in order to catch the first call
@@ -171,26 +162,29 @@ namespace nv
                 template < typename T >
                 using f = typename dispatch< 1, C >::template f< F< T > >;
             };
-            
+
             template < template < typename... > class F, typename C >
             struct dispatch< 2, promote< F, C > >
             {
                 template < typename T0, typename T1 >
                 using f = typename dispatch< 1, C >::template f< F< T0, T1 > >;
             };
-            
+
             template < template < typename... > class F, typename C >
             struct dispatch< 3, promote< F, C > >
             {
                 template < typename T0, typename T1, typename T2 >
-                using f = typename dispatch< 1, C >::template f< F< T0, T1, T2 > >;
+                using f =
+                    typename dispatch< 1, C >::template f< F< T0, T1, T2 > >;
             };
-           
+
             template < template < typename... > class F, typename C >
             struct dispatch< 4, promote< F, C > >
             {
                 template < typename T0, typename T1, typename T2, typename T3 >
-                using f = typename dispatch< 1, C >::template f< F< T0, T1, T2, T3 > >;
+                using f =
+                    typename dispatch< 1,
+                                       C >::template f< F< T0, T1, T2, T3 > >;
             };
 
             template < int N, template < typename... > class F, typename C >
@@ -337,6 +331,49 @@ namespace nv
         template < typename F, typename... Ts >
         using call = typename detail::dispatch< sizeof...( Ts ),
                                                 F >::template f< Ts... >;
+    } // namespace meta
+} // namespace nv
+
+
+namespace nv
+{
+    namespace meta
+    {
+        template < bool > struct conditional
+        {
+            template < typename F, typename T > using value_type = F;
+        };
+
+        template <> struct conditional< true >
+        {
+            template < typename F, typename T > using value_type = T;
+        };
+
+        struct false_type
+        {
+            constexpr static bool value = false;
+        };
+
+        struct true_type
+        {
+            constexpr static bool value = true;
+        };
+
+        namespace detail
+        {
+            template < typename T0, typename T1 > struct is_same_impl
+            {
+                using value_type = false_type;
+            };
+
+            template < typename T > struct is_same_impl< T, T >
+            {
+                using value_type = true_type;
+            };
+        } // namespace detail
+
+        template < typename T0, typename T1 >
+        using is_same = typename detail::is_same_impl< T0, T1 >::value_type;
     } // namespace meta
 } // namespace nv
 
