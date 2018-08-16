@@ -11,11 +11,6 @@
 #include "gl/gl_helpers.hpp"
 #include "renderer.hpp"
 
-#include "meta.hpp"
-#include "type_system.hpp"
-#include "renderer_types.hpp"
-#include "gl/gl_vao_channels.hpp"
-
 namespace
 {
     static void error_callback( int, const char* const description )
@@ -205,19 +200,6 @@ struct glew_context
 
 int main()
 {
-    using the_channels = gl_vao_channel_desc_generator< vertex_desc >;
-    
-    // test( vertex_desc{} );
-    // test( the_channels::flatten_fields_list{} );
-
-    const auto channels = the_channels::generate_channels();
-
-    for ( const auto& c : channels )
-    {
-        logger::log( "channel size: ", c.m_size,
-                     " channel offset: ", c.m_offset );
-    }
-
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
     {
@@ -237,10 +219,6 @@ int main()
     {
         exit( EXIT_FAILURE );
     }
-
-    // glew gives us an invalid enum error
-    // it's known issue
-    gl_helpers::eat_gl_errors();
 
     auto r = renderer();
     r.on_initialize();

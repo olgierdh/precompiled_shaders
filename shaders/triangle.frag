@@ -1,8 +1,9 @@
 #version 460 core
 
-layout(location = 0) out vec3 color;
+layout(location = 0) out vec4 out_color;
+layout(location = 1) in vec4 in_color;
 
 void main()
 {
-    color = vec3(1, 1, 0);
+    out_color = in_color;
 }

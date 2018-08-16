@@ -8,6 +8,11 @@
 #include "logger.hpp"
 #include "binary_loader.hpp"
 
+#include "meta.hpp"
+#include "type_system.hpp"
+#include "renderer_types.hpp"
+#include "gl/gl_vao_channels.hpp"
+
 struct gl_resource
 {
     constexpr static auto invalid_id = static_cast< GLuint >( -1 );
@@ -199,16 +204,38 @@ struct vertex_buffer_object : public gl_resource
     }
 };
 
+template < typename T > static inline void bind( const T& );
+template < typename T > struct scope_binder;
+
+namespace gl_device
+{
+    static inline void bind( const vertex_buffer_object& vbo )
+    {
+        gl_helpers::gl_call( glBindBuffer, GL_ARRAY_BUFFER,
+                             vbo.is_set() ? vbo.id() : 0 );
+    }
+
+    static inline void bind( const vertex_array_object& vao )
+    {
+        gl_helpers::gl_call( glBindVertexArray, vao.is_set() ? vao.id() : 0 );
+    }
+
+    static inline void bind( const program& p )
+    {
+        gl_helpers::gl_call( glUseProgram, p.is_set() ? p.id() : 0 );
+    }
+} // namespace gl_device
+
 template < typename T > struct scope_binder
 {
     scope_binder( T& v )
     {
-        bind( v );
+        gl_device::bind( v );
     }
 
     ~scope_binder()
     {
-        bind( T{} );
+        gl_device::bind( T{} );
     }
 
     scope_binder( const scope_binder& ) = delete;
@@ -259,34 +286,25 @@ namespace gl_device
         return vertex_buffer_object( vbo );
     }
 
-    template < typename T > static inline void bind( const T& );
 
-    static inline void bind( vertex_buffer_object& vbo )
-    {
-        gl_helpers::gl_call( glBindBuffer, GL_ARRAY_BUFFER,
-                             vbo.is_set() ? vbo.id() : 0 );
-    }
-
-    static inline void bind( vertex_array_object& vao )
-    {
-        gl_helpers::gl_call( glBindVertexArray, vao.is_set() ? vao.id() : 0 );
-    }
-
-    template < template < typename > class T, typename D >
+    template < template < typename... > class T, typename D >
     static inline void
     write_data( vertex_buffer_object& vbo, const T< D >& data )
     {
+        static_assert( std::is_standard_layout_v< D >,
+                       "Data must be std layout" );
+        static_assert( std::is_trivially_copyable_v< D >,
+                       "Data must be trivially copyable" );
+
         const auto data_size = data.size() * sizeof( D );
         const auto s         = scope_bind( vbo );
-        glBufferData( GL_ARRAY_BUFFER, data_size, data.data(), GL_STATIC_DRAW );
+        
+        logger::log( "Copying data to GPU VBO size: ", data_size );
+
+        gl_helpers::gl_call( glBufferData, GL_ARRAY_BUFFER, data_size,
+                             data.data(), GL_STATIC_DRAW );
     }
-    
-    /**
-     * @brief Creates vertex array object using meta reflection
-     * information about the vertex to be used. 
-     *
-     */
-    template< typename T >
+
     static inline vertex_array_object make_vao()
     {
         logger::log( "Create vao" );
@@ -296,14 +314,33 @@ namespace gl_device
     }
 
     template < typename T >
-    static inline void configure_vao( vertex_buffer_object& vbo,
-                                      vertex_array_object& vao,
-                                      GLuint index )
+    static inline void
+    configure_vao( vertex_buffer_object& vbo, vertex_array_object& vao )
     {
         const auto s0 = scope_bind( vbo );
         const auto s1 = scope_bind( vao );
 
-        glVertexAttribPointer( index, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+        using the_channels  = gl_vao_channel_desc_generator< T >;
+        const auto channels = the_channels::generate_channels();
+        constexpr auto size = sizeof( typename T::value_type );
+
+        logger::log( "data size: ", size );
+
+        int index = 0;
+        for ( const auto& c : channels )
+        {
+            logger::log( "channel index: ", index, " channel size: ", c.m_size,
+                         " channel len: ", c.m_len,
+                         " channel offset: ", c.m_offset );
+            const GLenum type = gl_type_to_gl_enum( c.m_type );
+            logger::log( "Type: ", static_cast< int >( type ) );
+            
+            gl_helpers::gl_call( glVertexAttribPointer, index, c.m_len, type,
+                                 GL_FALSE, size, ( void* ) c.m_offset );
+            gl_helpers::gl_call( glEnableVertexAttribArray, index );
+
+            index += 1;
+        }
     }
 
     /**
@@ -402,13 +439,35 @@ struct renderer
                                                       fs_data, "main" );
 
         m_program = gl_device::make_program( std::move( vs ), std::move( fs ) );
+        m_vbo     = gl_device::make_vbo();
+        gl_device::write_data( m_vbo, triangle_data );
+        
+        m_vao     = gl_device::make_vao();
+        gl_device::configure_vao< vertex_desc >( m_vbo, m_vao );
     }
 
     void on_render()
     {
+        gl_helpers::gl_call( glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+        const auto s2 = scope_binder( m_program );
+        const auto s1 = scope_binder( m_vao );
+
+        gl_helpers::gl_call( glDrawArrays, GL_TRIANGLES, 0, 3 );
     }
 
 
   private:
     program m_program;
+    vertex_buffer_object m_vbo;
+    vertex_array_object m_vao;
+
+  private:
+    static const std::vector< vertex > triangle_data;
+};
+
+const auto renderer::triangle_data = std::vector< vertex >{
+    vertex{{-1.0f, -1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
+    vertex{{1.0f, -1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
+    vertex{{0.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},
 };

@@ -2,6 +2,8 @@
 
 #include <array>
 
+#include <GL/glew.h>
+
 #include "logger.hpp"
 #include "meta.hpp"
 
@@ -52,7 +54,6 @@ namespace detail
 enum class gl_type
 {
     float_type,
-    int_type,
     byte_type,
     unsigned_byte_type,
     short_type,
@@ -67,16 +68,39 @@ template < typename T > constexpr gl_type get_gl_type( T&& )
     {
         return gl_type::float_type;
     }
-    else if constexpr ( nv::meta::is_same< type, int >::value )
-    {
-        return gl_type::int_type;
-    }
     else if constexpr ( nv::meta::is_same< type, char >::value )
     {
         return gl_type::byte_type;
     }
+    else if constexpr ( nv::meta::is_same< type, unsigned char >::value )
+    {
+        return gl_type::unsigned_byte_type;
+    }
+    else if constexpr ( nv::meta::is_same< type, short >::value )
+    {
+        return gl_type::short_type;
+    }
 
     return gl_type::unknown;
+}
+
+GLenum gl_type_to_gl_enum( gl_type type )
+{
+    switch ( type )
+    {
+        case gl_type::float_type:
+            return GL_FLOAT;
+        case gl_type::byte_type:
+            return GL_BYTE;
+        case gl_type::unsigned_byte_type:
+            return GL_UNSIGNED_BYTE;
+        case gl_type::short_type:
+            return GL_SHORT;
+        default:
+            return GL_FIXED;
+    };
+
+    return GL_FIXED;
 }
 
 struct channel
@@ -84,6 +108,7 @@ struct channel
     gl_type m_type;
     int64_t m_size;
     int64_t m_offset;
+    int64_t m_len;
 };
 
 template < typename T > struct gl_vao_channel_desc_generator
@@ -131,11 +156,16 @@ template < typename T > struct gl_vao_channel_desc_generator
                                 nv::meta::promote< detail::get_value_type >,
                                 nv::meta::reduce< detail::type_equality > > >,
                             A >;
+
+        constexpr auto len = nv::meta::call<
+            nv::meta::unpack< nv::meta::promote< detail::calc_len > >,
+            A >::value;
+
         static_assert(
             nv::meta::is_same< nv::meta::false_type, the_type >::value != true,
             "Channel's types are not the same!" );
 
-        return channel{get_gl_type( the_type{} ), size, offset};
+        return channel{get_gl_type( the_type{} ), size, offset, len};
     }
 
     template < typename... A, typename... B >

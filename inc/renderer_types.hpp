@@ -23,17 +23,16 @@ struct vec4f
 
 struct vec4c
 {
-    char r;
-    char g;
-    char b;
-    char a;
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
+    unsigned char a;
 };
 
 struct vertex
 {
     vec4f m_position;
-    vec4c m_color0;
-    vec3f m_color1;
+    vec4f m_color0;
 };
 
 /* meta description of types not very beautiful but handy later on */
@@ -64,11 +63,9 @@ using vertex_desc = decltype( make_struct_desc(
     vertex{},
     "vertex"_tstr,
     make_field_desc< &vertex::m_position >( "m_position"_tstr, vec4f_desc{} ),
-    make_field_desc< &vertex::m_color0 >( "m_color0"_tstr, vec4c_desc{} ),
-    make_field_desc< &vertex::m_color1 >( "m_color1"_tstr, vec3f_desc{} ) ) );
+    make_field_desc< &vertex::m_color0 >( "m_color0"_tstr, vec4f_desc{} ) ) );
 
 /* list of types registered for renderer system */
 using renderer_reflection =
     nv::meta::type_list< vec3f_desc, vec4f_desc, vertex_desc >;
-
 
