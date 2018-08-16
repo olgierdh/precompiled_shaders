@@ -1,11 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
+#include <cassert>
 
 #include "logger.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include "gl/gl_helpers.hpp"
+#include "renderer.hpp"
 
 namespace
 {
@@ -136,7 +140,8 @@ struct glfw_window
     }
 
   private:
-    glfw_window( GLFWwindow* window, int ver_maj, int ver_min, int width, int height )
+    glfw_window(
+        GLFWwindow* window, int ver_maj, int ver_min, int width, int height )
         : m_window( window ), m_ver_maj( ver_maj ), m_ver_min( ver_min ),
           m_width( width ), m_height( height )
     {
@@ -160,11 +165,12 @@ struct glew_context
 
         if ( err != GLEW_OK )
         {
-            logger::log( "glew initialization failed: ", glewGetErrorString( err ) );
+            logger::log( "glew initialization failed: ",
+                         glewGetErrorString( err ) );
             return glew_context( false );
         }
 
-        if ( GLEW_VERSION_4_5 )
+        if ( GLEW_VERSION_4_6 )
         {
             logger::log( "glew initialization succesfull" );
             return glew_context( true );
@@ -200,11 +206,13 @@ int main()
         exit( EXIT_FAILURE );
     }
 
-    const auto w = glfw_window::make( 4, 5, 1280, 720 );
+    const auto w = glfw_window::make( 4, 6, 1280, 720 );
     if ( !w.is_initialized() )
     {
         exit( EXIT_FAILURE );
     }
+
+    gl_helpers::check_gl_errors();
 
     const auto g = glew_context::make();
     if ( !g.is_initialized() )
@@ -212,10 +220,12 @@ int main()
         exit( EXIT_FAILURE );
     }
 
+    auto r = renderer();
+    r.on_initialize();
+
     while ( !w.frame_begin() )
     {
+        r.on_render();
         w.frame_end();
     }
-
-    return 0;
 }

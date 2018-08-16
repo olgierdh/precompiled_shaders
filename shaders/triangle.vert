@@ -1,9 +1,11 @@
-#version 450 core
+#version 460 core
 
-layout(location = 0) in vec3 vs_pos_ms;
+layout(location = 0) in vec4 vs_pos_ms;
+layout(location = 1) in vec4 vs_col_ms;
+layout(location = 1) out vec4 out_color;
 
 void main()
 {
-    gl_Position.xyz = vs_pos_ms;
-    gl_Position.w = 1.0;
+    out_color = vs_col_ms;
+    gl_Position.xyzw = vs_pos_ms;
 }
