@@ -3,6 +3,9 @@
 //
 // This file is part of Nova libraries. 
 // For conditions of distribution and use, see copying.txt file in root folder.
+// 
+// This implementation of meta library uses Tacit Style approach developed by Odin Holmes.
+// Original implementation https://github.com/odinthenerd/tmp
 
 #pragma once
 
