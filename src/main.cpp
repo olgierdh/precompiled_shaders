@@ -212,8 +212,6 @@ int main()
 
     const auto channels = the_channels::generate_channels();
 
-    nv::meta::test< test_data >();
-
     for ( const auto& c : channels )
     {
         logger::log( "channel size: ", c.m_size,

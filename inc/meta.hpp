@@ -455,5 +455,3 @@ using test_reverse_data = nv::meta::call< test_reverse,
 #endif
 
 
-using test_data = nv::meta::call< nv::meta::gen_n_types< 1024, int > >;
-
