@@ -277,10 +277,16 @@ namespace gl_device
     write_data( vertex_buffer_object& vbo, const T< D >& data )
     {
         const auto data_size = data.size() * sizeof( D );
-        const auto s = scope_bind( vbo );
+        const auto s         = scope_bind( vbo );
         glBufferData( GL_ARRAY_BUFFER, data_size, data.data(), GL_STATIC_DRAW );
     }
-
+    
+    /**
+     * @brief Creates vertex array object using meta reflection
+     * information about the vertex to be used. 
+     *
+     */
+    template< typename T >
     static inline vertex_array_object make_vao()
     {
         logger::log( "Create vao" );
@@ -298,13 +304,11 @@ namespace gl_device
         const auto s1 = scope_bind( vao );
 
         glVertexAttribPointer( index, 3, GL_FLOAT, GL_FALSE, 0, 0 );
-
-        
     }
 
     /**
      * This is not the best way of initialization.
-     * Think about adding intermediate stages of processing for programs
+     * @TODO Think about adding intermediate stages of processing for programs
      * a) before attach
      * b) after attach
      * c) after link

@@ -14,6 +14,7 @@
 #include "meta.hpp"
 #include "type_system.hpp"
 #include "renderer_types.hpp"
+#include "gl/gl_vao_channels.hpp"
 
 namespace
 {
@@ -204,16 +205,18 @@ struct glew_context
 
 int main()
 {
-    using the_channels = channels< vertex_desc >;
+    using the_channels = gl_vao_channel_desc_generator< vertex_desc >;
     
-    //test( vertex_desc{} );
-    //test( the_channels::flatten_fields_list{} );
+    nv::meta::test< test_reflection >();
+    // test( vertex_desc{} );
+    // test( the_channels::flatten_fields_list{} );
 
     const auto channels = the_channels::generate_channels();
-    
-    for( const auto& c : channels )
+
+    for ( const auto& c : channels )
     {
-        logger::log( "channel size: ", c.m_size );
+        logger::log( "channel size: ", c.m_size,
+                     " channel offset: ", c.m_offset );
     }
 
     const auto ctx = glfw_context::make( error_callback );

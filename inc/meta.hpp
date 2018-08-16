@@ -4,7 +4,7 @@ namespace nv
 {
     namespace meta
     {
-        template < typename T > void test( T&& );
+        template < typename T > void test();
 
         template < int I > struct int_type
         {

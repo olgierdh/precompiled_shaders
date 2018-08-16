@@ -14,31 +14,31 @@ template < typename T, typename S, typename F > struct struct_desc
     using field_list = F;
 };
 
-template < typename T, typename C > struct field_type
+template < auto f, typename T, typename C > struct field_type
 {
     using value_type   = T;
     using context_type = C;
+    constexpr static auto member_ptr = f;
 };
 
-template < typename T, typename C >
-constexpr auto detect_field_type( T C::* ) -> field_type< T, C >;
+template < auto f, typename T, typename C >
+constexpr auto detect_field_type( T C::* ) -> field_type< f, T, C >;
 
 template < auto f, typename S, typename D > struct field_desc
 {
-    constexpr static auto member_ptr = f;
-    using value_type                 = decltype( detect_field_type( f ) );
+    using value_type                 = decltype( detect_field_type< f >( f ) );
     using value_name                 = S;
     using type_desc                  = D;
 };
 
 template < typename... Ts > using fields = nv::meta::type_list< Ts... >;
 
-template < typename T, typename S, typename D >
-constexpr auto make_field_desc( T&& t, S&&, D && ) -> field_desc< T{}, S, D >;
+template < auto f, typename S, typename D >
+constexpr auto make_field_desc( S&&, D && ) -> field_desc< f, S, D >;
 
-template < typename T, typename S >
+template < auto f, typename S >
 constexpr auto
-make_field_desc( T&& t, S && ) -> field_desc< T{}, S, nv::meta::null_type >;
+make_field_desc( S && ) -> field_desc< f, S, nv::meta::null_type >;
 
 template < typename T, typename S, typename... Fs >
 constexpr auto make_struct_desc( T&&, S&&, Fs&&... )
