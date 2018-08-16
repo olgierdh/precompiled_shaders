@@ -71,9 +71,4 @@ using vertex_desc = decltype( make_struct_desc(
 using renderer_reflection =
     nv::meta::type_list< vec3f_desc, vec4f_desc, vertex_desc >;
 
-template< typename T >
-using what = T;
-using test_reflection =
-    nv::meta::call< nv::meta::unpack< nv::meta::foreach< nv::meta::promote< what > > >,
-                    vec4c >;
 

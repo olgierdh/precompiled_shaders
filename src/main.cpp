@@ -207,7 +207,6 @@ int main()
 {
     using the_channels = gl_vao_channel_desc_generator< vertex_desc >;
     
-    nv::meta::test< test_reflection >();
     // test( vertex_desc{} );
     // test( the_channels::flatten_fields_list{} );
 
