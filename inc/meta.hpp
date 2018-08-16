@@ -326,6 +326,69 @@ namespace nv
             };
         } // namespace detail
 
+        template < int N, typename T, typename C = listify<> >
+        struct gen_n_types
+        {
+        };
+
+        namespace detail
+        {
+            template < int N > constexpr int find_size()
+            {
+                if ( N > 3 )
+                {
+                    return 3;
+                }
+
+                return N;
+            }
+
+            template < typename C, typename... Ts > struct gen_n_types_impl
+            {
+                template < typename... Vs >
+                using f = typename dispatch< sizeof...( Ts ) + sizeof...( Vs ),
+                                             C >::template f< Ts..., Vs... >;
+            };
+
+            template < int N, int I, typename T, typename C >
+            struct dispatch< N, gen_n_types< I, T, C > >;
+
+
+            template < int N, typename T, typename C >
+            struct dispatch< N, gen_n_types< 1, T, C > >
+            {
+                template < typename... Ts >
+                using f = typename dispatch< sizeof...( Ts ) + 1,
+                                             C >::template f< Ts..., T >;
+            };
+
+            template < int N, typename T, typename C >
+            struct dispatch< N, gen_n_types< 2, T, C > >
+            {
+                template < typename... Ts >
+                using f = typename dispatch< sizeof...( Ts ) + 2,
+                                             C >::template f< Ts..., T, T >;
+            };
+
+            template < int N, typename T, typename C >
+            struct dispatch< N, gen_n_types< 3, T, C > >
+            {
+                template < typename... Ts >
+                using f = typename dispatch< sizeof...( Ts ) + 3,
+                                             C >::template f< Ts..., T, T, T >;
+            };
+
+            template < int N, int I, typename T, typename C >
+            struct dispatch< N, gen_n_types< I, T, C > >
+            {
+                template < typename... Ts >
+                using f = typename dispatch<
+                    sizeof...( Ts ) + 1,
+                    gen_n_types< I - 3, T, promote< gen_n_types_impl > > >::
+                    template f< C, Ts... >::template f< T, T, T >;
+            };
+
+        } // namespace detail
 
         /** call the meta functor */
         template < typename F, typename... Ts >
@@ -390,3 +453,7 @@ using test_reverse_data = nv::meta::call< test_reverse,
                                           nv::meta::int_type< 2 >,
                                           nv::meta::int_type< 3 > >;
 #endif
+
+
+using test_data = nv::meta::call< nv::meta::gen_n_types< 1024, int > >;
+
