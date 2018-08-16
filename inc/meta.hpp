@@ -333,16 +333,6 @@ namespace nv
 
         namespace detail
         {
-            template < int N > constexpr int find_size()
-            {
-                if ( N > 3 )
-                {
-                    return 3;
-                }
-
-                return N;
-            }
-
             template < typename C, typename... Ts > struct gen_n_types_impl
             {
                 template < typename... Vs >
