@@ -1,7 +1,7 @@
 // Copyright (C) 2017-2018 ChaosForge Ltd
 // http://chaosforge.org/
 //
-// This file is part of Nova libraries. 
+// This file is part of Nova libraries.
 // For conditions of distribution and use, see copying.txt file in root folder.
 
 #include <stdio.h>
@@ -206,6 +206,8 @@ struct glew_context
 
 int main()
 {
+    test();
+
     const auto ctx = glfw_context::make( error_callback );
     if ( !ctx.is_initialized() )
     {

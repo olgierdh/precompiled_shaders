@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "logger.hpp"
+
 namespace nv
 {
     namespace meta
@@ -563,17 +565,14 @@ namespace nv
 } // namespace nv
 
 template < typename... Ts >
+using calc_len = nv::meta::int_type< sizeof...( Ts ) >;
+
+template < typename... Ts >
 using can_instantiate =
     typename nv::meta::no_fields_detector::template can_instantiate< Ts... >;
 
-using query_part = nv::meta::call< nv::meta::promote< can_instantiate >,
-                                   v3f,
-                                   nv::meta::any_type,
-                                   nv::meta::any_type,
-                                   nv::meta::any_type >;
-
 template < typename T >
-using query_test = nv::meta::call<
+using get_fields_list = nv::meta::call<
     nv::meta::gen_n_types<
         sizeof( T ),
         nv::meta::any_type,
@@ -583,10 +582,34 @@ using query_test = nv::meta::call<
 
 // using pop_back_test =
 //     nv::meta::call< nv::meta::pop_back<>, int, float, char, float, short >;
+template < typename T, typename... Ts >
+constexpr auto at0( nv::meta::type_list< T, Ts... > && ) -> T;
 
-void test()
+/**
+ * @brief Calculates number of fields of given type
+ *
+ * Works only for types that are allowed to be constructed using {}
+ *
+ * @tparam T - type
+ * @return constexpr int - number of fields or -1
+ */
+template < typename T > constexpr int calculate_number_of_fields()
 {
-    nv::meta::test< query_test< v3f > >();
+    using fields_list = get_fields_list< T >;
+    using head        = decltype( at0( fields_list{} ) );
+    constexpr int len = nv::meta::conditional<
+        nv::meta::is_same< head, nv::meta::false_type >::value >::
+        template value_type<
+            nv::meta::call< nv::meta::unpack< nv::meta::promote< calc_len > >,
+                            fields_list >,
+            nv::meta::int_type< 0 > >::value;
+    return len -
+           1; // first element is a type we calculate the number of fields for
+}
+
+inline void test()
+{
+    logger::log( "Number of fields: ", calculate_number_of_fields< v3f >() );
 }
 
 static_assert( can_instantiate< v3f,
