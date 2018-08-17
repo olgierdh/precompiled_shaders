@@ -1,7 +1,7 @@
 // Copyright (C) 2017-2018 ChaosForge Ltd
 // http://chaosforge.org/
 //
-// This file is part of Nova libraries. 
+// This file is part of Nova libraries.
 // For conditions of distribution and use, see copying.txt file in root folder.
 
 #pragma once
@@ -304,7 +304,7 @@ namespace gl_device
 
         const auto data_size = data.size() * sizeof( D );
         const auto s         = scope_bind( vbo );
-        
+
         logger::log( "Copying data to GPU VBO size: ", data_size );
 
         gl_helpers::gl_call( glBufferData, GL_ARRAY_BUFFER, data_size,
@@ -340,9 +340,9 @@ namespace gl_device
                          " channel offset: ", c.m_offset );
             const GLenum type = gl_type_to_gl_enum( c.m_type );
             logger::log( "Type: ", static_cast< int >( type ) );
-            
+
             gl_helpers::gl_call( glVertexAttribPointer, index, c.m_len, type,
-                                 GL_FALSE, size, ( void* ) c.m_offset );
+                                 GL_FALSE, size, ( void* )c.m_offset );
             gl_helpers::gl_call( glEnableVertexAttribArray, index );
 
             index += 1;
@@ -447,14 +447,15 @@ struct renderer
         m_program = gl_device::make_program( std::move( vs ), std::move( fs ) );
         m_vbo     = gl_device::make_vbo();
         gl_device::write_data( m_vbo, triangle_data );
-        
-        m_vao     = gl_device::make_vao();
+
+        m_vao = gl_device::make_vao();
         gl_device::configure_vao< vertex_desc >( m_vbo, m_vao );
     }
 
     void on_render()
     {
-        gl_helpers::gl_call( glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        gl_helpers::gl_call( glClear,
+                             GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         const auto s2 = scope_binder( m_program );
         const auto s1 = scope_binder( m_vao );
@@ -472,7 +473,7 @@ struct renderer
     static const std::vector< vertex > triangle_data;
 };
 
-const auto renderer::triangle_data = std::vector< vertex >{
+const std::vector< vertex > renderer::triangle_data = std::vector< vertex >{
     vertex{{-1.0f, -1.0f, 0.0f, 1.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},
     vertex{{1.0f, -1.0f, 0.0f, 1.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},
     vertex{{0.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f, 1.0f}},

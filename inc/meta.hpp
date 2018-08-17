@@ -1,11 +1,11 @@
 // Copyright (C) 2017-2018 ChaosForge Ltd
 // http://chaosforge.org/
 //
-// This file is part of Nova libraries. 
+// This file is part of Nova libraries.
 // For conditions of distribution and use, see copying.txt file in root folder.
-// 
-// This implementation of meta library uses Tacit Style approach developed by Odin Holmes.
-// Original implementation https://github.com/odinthenerd/tmp
+//
+// This implementation of meta library uses Tacit Style approach developed by
+// Odin Holmes. Original implementation https://github.com/odinthenerd/tmp
 
 #pragma once
 
@@ -170,30 +170,6 @@ namespace nv
             {
                 template < typename T >
                 using f = typename dispatch< 1, C >::template f< F< T > >;
-            };
-
-            template < template < typename... > class F, typename C >
-            struct dispatch< 2, promote< F, C > >
-            {
-                template < typename T0, typename T1 >
-                using f = typename dispatch< 1, C >::template f< F< T0, T1 > >;
-            };
-
-            template < template < typename... > class F, typename C >
-            struct dispatch< 3, promote< F, C > >
-            {
-                template < typename T0, typename T1, typename T2 >
-                using f =
-                    typename dispatch< 1, C >::template f< F< T0, T1, T2 > >;
-            };
-
-            template < template < typename... > class F, typename C >
-            struct dispatch< 4, promote< F, C > >
-            {
-                template < typename T0, typename T1, typename T2, typename T3 >
-                using f =
-                    typename dispatch< 1,
-                                       C >::template f< F< T0, T1, T2, T3 > >;
             };
 
             template < int N, template < typename... > class F, typename C >
@@ -386,7 +362,6 @@ namespace nv
                     gen_n_types< I - 3, T, promote< gen_n_types_impl > > >::
                     template f< C, Ts... >::template f< T, T, T >;
             };
-
         } // namespace detail
 
         /** call the meta functor */
@@ -395,7 +370,6 @@ namespace nv
                                                 F >::template f< Ts... >;
     } // namespace meta
 } // namespace nv
-
 
 namespace nv
 {
@@ -423,6 +397,24 @@ namespace nv
 
         namespace detail
         {
+            template < typename T > struct neg_impl;
+
+            template <> struct neg_impl< false_type >
+            {
+                using value_type = true_type;
+            };
+
+            template <> struct neg_impl< true_type >
+            {
+                using value_type = false_type;
+            };
+        } // namespace detail
+
+        template < typename T >
+        using neg = typename detail::neg_impl< T >::value_type;
+
+        namespace detail
+        {
             template < typename T0, typename T1 > struct is_same_impl
             {
                 using value_type = false_type;
@@ -439,3 +431,167 @@ namespace nv
     } // namespace meta
 } // namespace nv
 
+namespace nv
+{
+    namespace meta
+    {
+        /**
+         * @brief Simulates loop like template instantiation
+         *
+         * @tparam F - Condition
+         * @tparam CF - Call on fail
+         * @tparam C - Call on success
+         */
+        template < typename F,
+                   template < typename... > class CF,
+                   typename C = listify<> >
+        struct do_while
+        {
+        };
+
+        namespace detail
+        {
+            template < int N,
+                       typename F,
+                       template < typename... > class CF,
+                       typename C >
+            struct dispatch< N, do_while< F, CF, C > >
+            {
+                template < typename... Ts >
+                using f = typename conditional< call< F, Ts... >::value >::
+                    template value_type<
+                        call< CF< do_while< F, CF, C > >, Ts... >,
+                        call< C, Ts... > >;
+            };
+
+            template < typename F,
+                       template < typename... > class CF,
+                       typename C >
+            struct dispatch< 0, do_while< F, CF, C > >
+            {
+                template < typename... Ts > using f = call< C, Ts... >;
+            };
+        } // namespace detail
+
+    } // namespace meta
+} // namespace nv
+
+struct v3f
+{
+    float x;
+    float y;
+    float z;
+};
+
+namespace nv
+{
+    namespace meta
+    {
+        struct no_fields_detector
+        {
+            template < typename T, typename... Ts >
+            constexpr static auto detect( int ) -> decltype( T{Ts{}...} );
+
+            template < typename... > constexpr static false_type detect( ... );
+
+            template < typename... Ts >
+            using can_instantiate = nv::meta::neg<
+                nv::meta::is_same< decltype( detect< Ts... >( 0 ) ),
+                                   false_type > >;
+        };
+
+        struct any_type
+        {
+            template < typename T > operator T();
+        };
+    } // namespace meta
+} // namespace nv
+
+namespace nv
+{
+    namespace meta
+    {
+        template < typename C = listify<> > struct pop_back
+        {
+        };
+
+        namespace detail
+        {
+            template < typename C, typename T, typename... Ts >
+            struct pop_back_impl
+            {
+                template < typename... >
+                using f = typename dispatch< sizeof...( Ts ),
+                                             C >::template f< Ts... >;
+            };
+
+            template < typename C > struct dispatch< 0, pop_back< C > >
+            {
+                template < typename T0 >
+                using f = typename dispatch< 0, C >::template f<>;
+            };
+
+            template < typename C > struct dispatch< 1, pop_back< C > >
+            {
+                template < typename T0 >
+                using f = typename dispatch< 0, C >::template f<>;
+            };
+
+            template < typename C > struct dispatch< 2, pop_back< C > >
+            {
+                template < typename T0, typename T1 >
+                using f = typename dispatch< 1, C >::template f< T0 >;
+            };
+
+            template < typename C > struct dispatch< 3, pop_back< C > >
+            {
+                template < typename T0, typename T1, typename T2 >
+                using f = typename dispatch< 2, C >::template f< T0, T1 >;
+            };
+
+            template < int N, typename C > struct dispatch< N, pop_back< C > >
+            {
+                template < typename... Ts >
+                using f =
+                    typename dispatch< N + 1,
+                                       reverse< promote< pop_back_impl > > >::
+                        template f< Ts..., reverse< C > >::template f< Ts... >;
+            };
+        } // namespace detail
+
+    } // namespace meta
+} // namespace nv
+
+template < typename... Ts >
+using can_instantiate =
+    typename nv::meta::no_fields_detector::template can_instantiate< Ts... >;
+
+using query = nv::meta::do_while< nv::meta::promote< can_instantiate >,
+                                  nv::meta::pop_back >;
+
+using query_part = nv::meta::call< nv::meta::promote< can_instantiate >,
+                                   v3f,
+                                   nv::meta::any_type,
+                                   nv::meta::any_type,
+                                   nv::meta::any_type >;
+
+using query_test = nv::meta::call< query,
+                                   v3f,
+                                   nv::meta::any_type,
+                                   nv::meta::any_type,
+                                   nv::meta::any_type,
+                                   nv::meta::any_type >;
+
+// using pop_back_test =
+//     nv::meta::call< nv::meta::pop_back<>, int, float, char, float, short >;
+
+void test()
+{
+    nv::meta::test< query_test >();
+}
+
+static_assert( can_instantiate< v3f,
+                                nv::meta::any_type,
+                                nv::meta::any_type,
+                                nv::meta::any_type >::value,
+               "" );
