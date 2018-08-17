@@ -458,10 +458,10 @@ namespace nv
             struct dispatch< N, do_while< F, CF, C > >
             {
                 template < typename... Ts >
-                using f = typename conditional< call< F, Ts... >::value >::
-                    template value_type<
-                        call< CF< do_while< F, CF, C > >, Ts... >,
-                        call< C, Ts... > >;
+                using f = call<
+                    typename conditional< call< F, Ts... >::value >::
+                        template value_type< CF< do_while< F, CF, C > >, C >,
+                    Ts... >;
             };
 
             template < typename F,
@@ -566,28 +566,27 @@ template < typename... Ts >
 using can_instantiate =
     typename nv::meta::no_fields_detector::template can_instantiate< Ts... >;
 
-using query = nv::meta::do_while< nv::meta::promote< can_instantiate >,
-                                  nv::meta::pop_back >;
-
 using query_part = nv::meta::call< nv::meta::promote< can_instantiate >,
                                    v3f,
                                    nv::meta::any_type,
                                    nv::meta::any_type,
                                    nv::meta::any_type >;
 
-using query_test = nv::meta::call< query,
-                                   v3f,
-                                   nv::meta::any_type,
-                                   nv::meta::any_type,
-                                   nv::meta::any_type,
-                                   nv::meta::any_type >;
+template < typename T >
+using query_test = nv::meta::call<
+    nv::meta::gen_n_types<
+        sizeof( T ),
+        nv::meta::any_type,
+        nv::meta::do_while< nv::meta::promote< can_instantiate >,
+                            nv::meta::pop_back > >,
+    T >;
 
 // using pop_back_test =
 //     nv::meta::call< nv::meta::pop_back<>, int, float, char, float, short >;
 
 void test()
 {
-    nv::meta::test< query_test >();
+    nv::meta::test< query_test< v3f > >();
 }
 
 static_assert( can_instantiate< v3f,
