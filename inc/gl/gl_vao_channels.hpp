@@ -1,7 +1,7 @@
 // Copyright (C) 2017-2018 ChaosForge Ltd
 // http://chaosforge.org/
 //
-// This file is part of Nova libraries. 
+// This file is part of Nova libraries.
 // For conditions of distribution and use, see copying.txt file in root folder.
 
 #pragma once
@@ -15,25 +15,22 @@
 
 namespace detail
 {
-    template < typename T >
-    using get_value_type = typename T::value_type::value_type;
+    template < typename T > using get_value_type = typename T::value_type::value_type;
 
-    template < typename T >
-    using get_field_list = typename T::type_desc::field_list;
+    template < typename T > using get_field_list = typename T::type_desc::field_list;
 
     template < typename T > using get_field_desc = typename T::value_type;
 
     template < typename... T >
     using calc_sizeof = nv::meta::int_type< ( sizeof( T ) + ... ) >;
 
-    template < typename... T >
-    using calc_len = nv::meta::int_type< sizeof...( T ) >;
+    template < typename... T > using calc_len = nv::meta::int_type< sizeof...( T ) >;
 
     template < typename LHS, typename RHS > struct type_equality
     {
-        using value_type = typename nv::meta::conditional<
-            nv::meta::is_same< LHS, RHS >::value >::
-            template value_type< nv::meta::false_type, LHS >;
+        using value_type =
+            typename nv::meta::conditional< nv::meta::is_same< LHS, RHS >::value >::
+                template value_type< nv::meta::false_type, LHS >;
     };
 
     template < typename RHS > struct type_equality< nv::meta::false_type, RHS >
@@ -46,12 +43,11 @@ namespace detail
         using value_type = RHS;
     };
 
-    template < typename T, typename U >
-    int64_t offsetOf( U T::*const member ) noexcept
+    template < typename T, typename U > int64_t offsetOf( U T::*const member ) noexcept
     {
         const auto t = T{};
-        return reinterpret_cast< int64_t >( &( t.*member ) ) -
-               reinterpret_cast< int64_t >( &t );
+        return reinterpret_cast< int64_t >( &( t.*member ) )
+               - reinterpret_cast< int64_t >( &t );
     }
 } // namespace detail
 
@@ -132,9 +128,8 @@ template < typename T > struct gl_vao_channel_desc_generator
 
     static constexpr int get_no_channels() noexcept
     {
-        return nv::meta::call<
-            nv::meta::unpack< nv::meta::promote< detail::calc_len > >,
-            flatten_fields_list >::value;
+        return nv::meta::call< nv::meta::unpack< nv::meta::promote< detail::calc_len > >,
+                               flatten_fields_list >::value;
     }
 
     static decltype( auto ) generate_channels() noexcept
@@ -163,13 +158,12 @@ template < typename T > struct gl_vao_channel_desc_generator
                                 nv::meta::reduce< detail::type_equality > > >,
                             A >;
 
-        constexpr auto len = nv::meta::call<
-            nv::meta::unpack< nv::meta::promote< detail::calc_len > >,
-            A >::value;
+        constexpr auto len =
+            nv::meta::call< nv::meta::unpack< nv::meta::promote< detail::calc_len > >,
+                            A >::value;
 
-        static_assert(
-            nv::meta::is_same< nv::meta::false_type, the_type >::value != true,
-            "Channel's types are not the same!" );
+        static_assert( nv::meta::is_same< nv::meta::false_type, the_type >::value != true,
+                       "Channel's types are not the same!" );
 
         return channel{get_gl_type( the_type{} ), size, offset, len};
     }
@@ -184,4 +178,3 @@ template < typename T > struct gl_vao_channel_desc_generator
         return channels;
     }
 };
-

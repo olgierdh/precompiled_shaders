@@ -81,8 +81,7 @@ namespace nv
             template < int N, typename C > struct dispatch< N, listify< C > >
             {
                 template < typename... Ts >
-                using f =
-                    type_list< typename dispatch< 1, C >::template f< Ts >... >;
+                using f = type_list< typename dispatch< 1, C >::template f< Ts >... >;
             };
 
             template < int N, typename T, typename C >
@@ -93,8 +92,7 @@ namespace nv
                     typename dispatch< 1, always< T > >::template f< Ts >... >;
             };
 
-            template < typename T, typename C >
-            struct dispatch< 1, replace< T, C > >
+            template < typename T, typename C > struct dispatch< 1, replace< T, C > >
             {
                 template < typename >
                 using f = typename dispatch< 1, C >::template f< T >;
@@ -102,13 +100,11 @@ namespace nv
 
             template < typename C, typename L > struct unpack_impl;
 
-            template < typename C,
-                       template < typename... > class L,
-                       typename... Ls >
+            template < typename C, template < typename... > class L, typename... Ls >
             struct unpack_impl< C, L< Ls... > >
             {
-                using value_type = typename dispatch< sizeof...( Ls ),
-                                                      C >::template f< Ls... >;
+                using value_type =
+                    typename dispatch< sizeof...( Ls ), C >::template f< Ls... >;
             };
 
             template < int N, typename C > struct dispatch< N, unpack< C > >
@@ -117,9 +113,7 @@ namespace nv
                 using f = typename unpack_impl< C, L >::value_type;
             };
 
-            template < int N,
-                       template < typename... > class F,
-                       typename I,
+            template < int N, template < typename... > class F, typename I,
                        typename... Ts >
             struct reduce_impl;
 
@@ -127,21 +121,17 @@ namespace nv
             // probably there is a better way of doing this since the SFINAE
             // is the slowest template mechanism. For now it's ok.
             // @TODO fix it!
-            template < int N,
-                       template < typename... > class F,
-                       typename I,
-                       typename H,
+            template < int N, template < typename... > class F, typename I, typename H,
                        typename... Ts >
             struct reduce_impl< N, F, I, H, Ts... >
             {
                 template < typename R >
-                using value_type = typename reduce_impl< N - 1, F, I, Ts... >::
-                    template value_type< typename F< R, H >::value_type >;
+                using value_type =
+                    typename reduce_impl< N - 1, F, I, Ts... >::template value_type<
+                        typename F< R, H >::value_type >;
             };
 
-            template < template < typename... > class F,
-                       typename I,
-                       typename... Ts >
+            template < template < typename... > class F, typename I, typename... Ts >
             struct reduce_impl< 0, F, I, Ts... >
             {
                 template < typename R > using value_type = R;
@@ -151,12 +141,9 @@ namespace nv
             struct dispatch< N, reduce< F, C > >
             {
                 template < typename... Ts >
-                using f =
-                    typename dispatch< 1, C >::template f< typename reduce_impl<
-                        sizeof...( Ts ),
-                        F,
-                        null_type,
-                        Ts... >::template value_type< null_type > >;
+                using f = typename dispatch< 1, C >::template f<
+                    typename reduce_impl< sizeof...( Ts ), F, null_type,
+                                          Ts... >::template value_type< null_type > >;
             };
         } // namespace detail
 
@@ -189,17 +176,15 @@ namespace nv
         namespace detail
         {
             template < int N, int... Is >
-            constexpr auto
-            push_back_index_sequence( int&&, index_sequence< Is... > && )
+            constexpr auto push_back_index_sequence( int&&, index_sequence< Is... > && )
                 -> index_sequence< Is..., N >;
 
             template < int S, int C > struct make_index_sequence_impl
             {
                 template < typename T >
                 using value_type =
-                    typename make_index_sequence_impl< S, C + 1 >::
-                        template value_type< decltype(
-                            push_back_index_sequence< C >( C, T{} ) ) >;
+                    typename make_index_sequence_impl< S, C + 1 >::template value_type<
+                        decltype( push_back_index_sequence< C >( C, T{} ) ) >;
             };
 
             template < int S > struct make_index_sequence_impl< S, S >
@@ -209,9 +194,8 @@ namespace nv
         }; // namespace detail
 
         template < int S >
-        using make_index_sequence =
-            typename detail::make_index_sequence_impl< S, 0 >::
-                template value_type< index_sequence<> >;
+        using make_index_sequence = typename detail::make_index_sequence_impl<
+            S, 0 >::template value_type< index_sequence<> >;
 
         namespace detail
         {
@@ -221,23 +205,17 @@ namespace nv
             template < int N, int... Is >
             struct zip_with_index_impl< N, index_sequence< Is... > >
             {
-                template < typename F,
-                           template < typename... > class C,
-                           typename... Ts >
+                template < typename F, template < typename... > class C, typename... Ts >
                 using f =
-                    C< typename dispatch< 2, F >::template f< int_type< Is >,
-                                                              Ts >... >;
+                    C< typename dispatch< 2, F >::template f< int_type< Is >, Ts >... >;
             };
 
             template < int N, typename F, typename C >
             struct dispatch< N, zip_with_index< F, C > >
             {
                 template < typename... Ts >
-                using f =
-                    typename zip_with_index_impl< sizeof...( Ts ) >::template f<
-                        F,
-                        dispatch< sizeof...( Ts ), C >::template f,
-                        Ts... >;
+                using f = typename zip_with_index_impl< sizeof...( Ts ) >::template f<
+                    F, dispatch< sizeof...( Ts ), C >::template f, Ts... >;
             };
         } // namespace detail
 
@@ -282,22 +260,17 @@ namespace nv
 
             template < typename C > struct dispatch< 4, reverse< C > >
             {
-                template < typename T0,
-                           typename T1,
-                           typename T2,
-                           typename... Ts >
-                using f =
-                    typename dispatch< find_size< Ts... >() + 1,
-                                       reverse< promote< reverse_impl > > >::
-                        template f< Ts..., C >::template f< T2, T1, T0 >;
+                template < typename T0, typename T1, typename T2, typename... Ts >
+                using f = typename dispatch< find_size< Ts... >() + 1,
+                                             reverse< promote< reverse_impl > > >::
+                    template f< Ts..., C >::template f< T2, T1, T0 >;
             };
 
             template < int N, typename C > struct dispatch< N, reverse< C > >
             {
                 template < typename... Ts >
-                using f =
-                    typename dispatch< find_size< Ts... >(),
-                                       reverse< C > >::template f< Ts... >;
+                using f = typename dispatch< find_size< Ts... >(),
+                                             reverse< C > >::template f< Ts... >;
             };
         } // namespace detail
 
@@ -313,8 +286,7 @@ namespace nv
             };
         } // namespace detail
 
-        template < int N, typename T, typename C = listify<> >
-        struct gen_n_types
+        template < int N, typename T, typename C = listify<> > struct gen_n_types
         {
         };
 
@@ -335,16 +307,16 @@ namespace nv
             struct dispatch< N, gen_n_types< 1, T, C > >
             {
                 template < typename... Ts >
-                using f = typename dispatch< sizeof...( Ts ) + 1,
-                                             C >::template f< Ts..., T >;
+                using f =
+                    typename dispatch< sizeof...( Ts ) + 1, C >::template f< Ts..., T >;
             };
 
             template < int N, typename T, typename C >
             struct dispatch< N, gen_n_types< 2, T, C > >
             {
                 template < typename... Ts >
-                using f = typename dispatch< sizeof...( Ts ) + 2,
-                                             C >::template f< Ts..., T, T >;
+                using f = typename dispatch< sizeof...( Ts ) + 2, C >::template f< Ts...,
+                                                                                   T, T >;
             };
 
             template < int N, typename T, typename C >
@@ -368,8 +340,7 @@ namespace nv
 
         /** call the meta functor */
         template < typename F, typename... Ts >
-        using call = typename detail::dispatch< sizeof...( Ts ),
-                                                F >::template f< Ts... >;
+        using call = typename detail::dispatch< sizeof...( Ts ), F >::template f< Ts... >;
     } // namespace meta
 } // namespace nv
 
@@ -412,8 +383,7 @@ namespace nv
             };
         } // namespace detail
 
-        template < typename T >
-        using neg = typename detail::neg_impl< T >::value_type;
+        template < typename T > using neg = typename detail::neg_impl< T >::value_type;
 
         namespace detail
         {
@@ -444,31 +414,23 @@ namespace nv
          * @tparam CF - Call on fail
          * @tparam C - Call on success
          */
-        template < typename F,
-                   template < typename... > class CF,
-                   typename C = listify<> >
+        template < typename F, template < typename... > class CF, typename C = listify<> >
         struct do_while
         {
         };
 
         namespace detail
         {
-            template < int N,
-                       typename F,
-                       template < typename... > class CF,
-                       typename C >
+            template < int N, typename F, template < typename... > class CF, typename C >
             struct dispatch< N, do_while< F, CF, C > >
             {
                 template < typename... Ts >
-                using f = call<
-                    typename conditional< call< F, Ts... >::value >::
-                        template value_type< CF< do_while< F, CF, C > >, C >,
-                    Ts... >;
+                using f = call< typename conditional< call< F, Ts... >::value >::
+                                    template value_type< CF< do_while< F, CF, C > >, C >,
+                                Ts... >;
             };
 
-            template < typename F,
-                       template < typename... > class CF,
-                       typename C >
+            template < typename F, template < typename... > class CF, typename C >
             struct dispatch< 0, do_while< F, CF, C > >
             {
                 template < typename... Ts > using f = call< C, Ts... >;
@@ -498,8 +460,7 @@ namespace nv
 
             template < typename... Ts >
             using can_instantiate = nv::meta::neg<
-                nv::meta::is_same< decltype( detect< Ts... >( 0 ) ),
-                                   false_type > >;
+                nv::meta::is_same< decltype( detect< Ts... >( 0 ) ), false_type > >;
         };
 
         struct any_type
@@ -519,12 +480,10 @@ namespace nv
 
         namespace detail
         {
-            template < typename C, typename T, typename... Ts >
-            struct pop_back_impl
+            template < typename C, typename T, typename... Ts > struct pop_back_impl
             {
                 template < typename... >
-                using f = typename dispatch< sizeof...( Ts ),
-                                             C >::template f< Ts... >;
+                using f = typename dispatch< sizeof...( Ts ), C >::template f< Ts... >;
             };
 
             template < typename C > struct dispatch< 0, pop_back< C > >
@@ -555,8 +514,7 @@ namespace nv
             {
                 template < typename... Ts >
                 using f =
-                    typename dispatch< N + 1,
-                                       reverse< promote< pop_back_impl > > >::
+                    typename dispatch< N + 1, reverse< promote< pop_back_impl > > >::
                         template f< Ts..., reverse< C > >::template f< Ts... >;
             };
         } // namespace detail
@@ -564,8 +522,7 @@ namespace nv
     } // namespace meta
 } // namespace nv
 
-template < typename... Ts >
-using calc_len = nv::meta::int_type< sizeof...( Ts ) >;
+template < typename... Ts > using calc_len = nv::meta::int_type< sizeof...( Ts ) >;
 
 template < typename... Ts >
 using can_instantiate =
@@ -574,10 +531,8 @@ using can_instantiate =
 template < typename T >
 using get_fields_list = nv::meta::call<
     nv::meta::gen_n_types<
-        sizeof( T ),
-        nv::meta::any_type,
-        nv::meta::do_while< nv::meta::promote< can_instantiate >,
-                            nv::meta::pop_back > >,
+        sizeof( T ), nv::meta::any_type,
+        nv::meta::do_while< nv::meta::promote< can_instantiate >, nv::meta::pop_back > >,
     T >;
 
 // using pop_back_test =
@@ -597,14 +552,78 @@ template < typename T > constexpr int calculate_number_of_fields()
 {
     using fields_list = get_fields_list< T >;
     using head        = decltype( at0( fields_list{} ) );
-    constexpr int len = nv::meta::conditional<
-        nv::meta::is_same< head, nv::meta::false_type >::value >::
-        template value_type<
-            nv::meta::call< nv::meta::unpack< nv::meta::promote< calc_len > >,
-                            fields_list >,
-            nv::meta::int_type< 0 > >::value;
-    return len -
-           1; // first element is a type we calculate the number of fields for
+    constexpr int len =
+        nv::meta::conditional< nv::meta::is_same< head, nv::meta::false_type >::value >::
+            template value_type<
+                nv::meta::call< nv::meta::unpack< nv::meta::promote< calc_len > >,
+                                fields_list >,
+                nv::meta::int_type< 0 > >::value;
+    return len - 1; // first element is a type we calculate the number of fields for
+}
+
+namespace detail
+{
+    /**
+     * @brief Used for getting back the information about the type
+     * We are going to use a very simple, one might say crud way of getting
+     * back the information about the type.
+     */
+    template < int I > struct any_type_with_backward_info
+    {
+        int* m_value = nullptr;
+
+        template < typename T > constexpr operator T() noexcept
+        {
+            m_value[I] = I;
+            return T{};
+        }
+    };
+} // namespace detail
+
+namespace nv
+{
+    template < typename T, int N > struct static_array
+    {
+      public:
+        constexpr static_array() noexcept {};
+
+        constexpr T& operator[]( int i ) noexcept { return m_data[i]; }
+
+        constexpr const T& operator[]( int i ) const noexcept { return m_data[i]; }
+
+        constexpr T* ptr() noexcept { return &m_data[0]; }
+
+        constexpr T* ptr() const noexcept { return &m_data[0]; }
+
+        constexpr int size() noexcept { return N; }
+
+      private:
+        T m_data[N] = {0};
+    };
+} // namespace nv
+
+namespace nv
+{
+    namespace meta
+    {
+        /**
+         * @brief Register all the types that will be used via the type system
+         *
+         * Types are stored within the list of the lists with corresponding id
+         */
+        using fundamental_types = call< zip_with_index<>, int64_t, uint64_t, int32_t,
+                                        uint32_t, int16_t, uint16_t, int8_t, uint8_t >;
+    } // namespace meta
+} // namespace nv
+
+template < typename T > constexpr auto dismantle_types() noexcept
+{
+    auto types_holder = nv::static_array< int, 3 >{};
+    ( void )T{detail::any_type_with_backward_info< 0 >{types_holder.ptr()},
+              detail::any_type_with_backward_info< 1 >{types_holder.ptr()},
+              detail::any_type_with_backward_info< 2 >{types_holder.ptr()}};
+
+    return types_holder[0] + types_holder[1] + types_holder[2];
 }
 
 inline void test()
@@ -612,8 +631,8 @@ inline void test()
     logger::log( "Number of fields: ", calculate_number_of_fields< v3f >() );
 }
 
-static_assert( can_instantiate< v3f,
-                                nv::meta::any_type,
-                                nv::meta::any_type,
+static_assert( dismantle_types< v3f >() == 3, "" );
+
+static_assert( can_instantiate< v3f, nv::meta::any_type, nv::meta::any_type,
                                 nv::meta::any_type >::value,
                "" );

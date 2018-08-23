@@ -56,13 +56,11 @@ struct glfw_context
     glfw_context& operator=( const glfw_context& ) = default;
     glfw_context& operator=( glfw_context&& ) = default;
 
-    bool is_initialized() const
-    {
-        return m_is_initialized;
-    }
+    bool is_initialized() const { return m_is_initialized; }
 
   private:
-    glfw_context( bool initialized ) : m_is_initialized( initialized )
+    glfw_context( bool initialized )
+        : m_is_initialized( initialized )
     {
     }
 
@@ -108,10 +106,7 @@ struct glfw_window
         }
     }
 
-    bool is_initialized() const
-    {
-        return m_window != nullptr;
-    }
+    bool is_initialized() const { return m_window != nullptr; }
 
     bool frame_begin() const
     {
@@ -125,31 +120,21 @@ struct glfw_window
         glfwPollEvents();
     }
 
-    int get_ver_maj() const
-    {
-        return m_ver_maj;
-    }
+    int get_ver_maj() const { return m_ver_maj; }
 
-    int get_ver_min() const
-    {
-        return m_ver_min;
-    }
+    int get_ver_min() const { return m_ver_min; }
 
-    int get_width() const
-    {
-        return m_width;
-    }
+    int get_width() const { return m_width; }
 
-    int get_height() const
-    {
-        return m_height;
-    }
+    int get_height() const { return m_height; }
 
   private:
-    glfw_window(
-        GLFWwindow* window, int ver_maj, int ver_min, int width, int height )
-        : m_window( window ), m_ver_maj( ver_maj ), m_ver_min( ver_min ),
-          m_width( width ), m_height( height )
+    glfw_window( GLFWwindow* window, int ver_maj, int ver_min, int width, int height )
+        : m_window( window )
+        , m_ver_maj( ver_maj )
+        , m_ver_min( ver_min )
+        , m_width( width )
+        , m_height( height )
     {
     }
 
@@ -171,8 +156,7 @@ struct glew_context
 
         if ( err != GLEW_OK )
         {
-            logger::log( "glew initialization failed: ",
-                         glewGetErrorString( err ) );
+            logger::log( "glew initialization failed: ", glewGetErrorString( err ) );
             return glew_context( false );
         }
 
@@ -186,17 +170,13 @@ struct glew_context
         return glew_context( false );
     }
 
-    ~glew_context()
-    {
-    }
+    ~glew_context() {}
 
-    bool is_initialized() const
-    {
-        return m_is_initialized;
-    }
+    bool is_initialized() const { return m_is_initialized; }
 
   private:
-    glew_context( bool status ) : m_is_initialized( status )
+    glew_context( bool status )
+        : m_is_initialized( status )
     {
     }
 

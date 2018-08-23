@@ -24,18 +24,21 @@ struct gl_resource
     constexpr static auto invalid_id = static_cast< GLuint >( -1 );
 
   public:
-    gl_resource() noexcept : m_id( invalid_id ), m_is_set( false )
+    gl_resource() noexcept
+        : m_id( invalid_id )
+        , m_is_set( false )
     {
     }
 
-    gl_resource( GLuint id ) noexcept : m_id( id ), m_is_set( true )
+    gl_resource( GLuint id ) noexcept
+        : m_id( id )
+        , m_is_set( true )
     {
     }
 
     gl_resource( gl_resource&& other ) noexcept
-        : m_id{std::exchange( other.m_id, invalid_id )}, m_is_set{std::exchange(
-                                                             other.m_is_set,
-                                                             false )}
+        : m_id{std::exchange( other.m_id, invalid_id )}
+        , m_is_set{std::exchange( other.m_is_set, false )}
     {
     }
 
@@ -46,25 +49,13 @@ struct gl_resource
         return *this;
     }
 
-    GLuint id() const noexcept
-    {
-        return m_id;
-    }
+    GLuint id() const noexcept { return m_id; }
 
-    GLuint* ptr() noexcept
-    {
-        return &m_id;
-    }
+    GLuint* ptr() noexcept { return &m_id; }
 
-    bool is_valid() const noexcept
-    {
-        return m_id != invalid_id;
-    }
+    bool is_valid() const noexcept { return m_id != invalid_id; }
 
-    bool is_set() const noexcept
-    {
-        return m_is_set;
-    }
+    bool is_set() const noexcept { return m_is_set; }
 
   private:
     GLuint m_id;
@@ -82,15 +73,18 @@ template < typename T > struct shader : public gl_resource
 {
     using shader_type = T;
 
-    shader() noexcept : gl_resource()
+    shader() noexcept
+        : gl_resource()
     {
     }
 
-    shader( GLuint id ) noexcept : gl_resource( id )
+    shader( GLuint id ) noexcept
+        : gl_resource( id )
     {
     }
 
-    shader( shader&& other ) noexcept : gl_resource( std::move( other ) )
+    shader( shader&& other ) noexcept
+        : gl_resource( std::move( other ) )
     {
     }
 
@@ -115,13 +109,17 @@ using fragment_shader = shader< fragment_shader_type >;
 
 struct program : public gl_resource
 {
-    program() noexcept : gl_resource(), m_vs(), m_fs()
+    program() noexcept
+        : gl_resource()
+        , m_vs()
+        , m_fs()
     {
     }
 
     program( GLuint id, vertex_shader&& vs, fragment_shader&& fs ) noexcept
-        : gl_resource( id ), m_vs{std::exchange( vs, vertex_shader{} )},
-          m_fs{std::exchange( fs, fragment_shader{} )}
+        : gl_resource( id )
+        , m_vs{std::exchange( vs, vertex_shader{} )}
+        , m_fs{std::exchange( fs, fragment_shader{} )}
     {
     }
 
@@ -150,11 +148,13 @@ struct program : public gl_resource
 
 struct vertex_array_object : public gl_resource
 {
-    vertex_array_object() noexcept : gl_resource()
+    vertex_array_object() noexcept
+        : gl_resource()
     {
     }
 
-    vertex_array_object( GLuint id ) noexcept : gl_resource( id )
+    vertex_array_object( GLuint id ) noexcept
+        : gl_resource( id )
     {
     }
 
@@ -181,11 +181,13 @@ struct vertex_array_object : public gl_resource
 
 struct vertex_buffer_object : public gl_resource
 {
-    vertex_buffer_object() noexcept : gl_resource()
+    vertex_buffer_object() noexcept
+        : gl_resource()
     {
     }
 
-    vertex_buffer_object( GLuint id ) noexcept : gl_resource( id )
+    vertex_buffer_object( GLuint id ) noexcept
+        : gl_resource( id )
     {
     }
 
@@ -217,8 +219,7 @@ namespace gl_device
 {
     static inline void bind( const vertex_buffer_object& vbo ) noexcept
     {
-        gl_helpers::gl_call( glBindBuffer, GL_ARRAY_BUFFER,
-                             vbo.is_set() ? vbo.id() : 0 );
+        gl_helpers::gl_call( glBindBuffer, GL_ARRAY_BUFFER, vbo.is_set() ? vbo.id() : 0 );
     }
 
     static inline void bind( const vertex_array_object& vao ) noexcept
@@ -234,15 +235,9 @@ namespace gl_device
 
 template < typename T > struct scope_binder
 {
-    scope_binder( T& v ) noexcept
-    {
-        gl_device::bind( v );
-    }
+    scope_binder( T& v ) noexcept { gl_device::bind( v ); }
 
-    ~scope_binder() noexcept
-    {
-        gl_device::bind( T{} );
-    }
+    ~scope_binder() noexcept { gl_device::bind( T{} ); }
 
     scope_binder( const scope_binder& ) noexcept = delete;
     scope_binder( scope_binder&& ) noexcept      = delete;
@@ -297,8 +292,7 @@ namespace gl_device
     static inline void
     write_data( vertex_buffer_object& vbo, const T< D >& data ) noexcept
     {
-        static_assert( std::is_standard_layout_v< D >,
-                       "Data must be std layout" );
+        static_assert( std::is_standard_layout_v< D >, "Data must be std layout" );
         static_assert( std::is_trivially_copyable_v< D >,
                        "Data must be trivially copyable" );
 
@@ -307,8 +301,8 @@ namespace gl_device
 
         logger::log( "Copying data to GPU VBO size: ", data_size );
 
-        gl_helpers::gl_call( glBufferData, GL_ARRAY_BUFFER, data_size,
-                             data.data(), GL_STATIC_DRAW );
+        gl_helpers::gl_call( glBufferData, GL_ARRAY_BUFFER, data_size, data.data(),
+                             GL_STATIC_DRAW );
     }
 
     static inline vertex_array_object make_vao() noexcept
@@ -320,8 +314,8 @@ namespace gl_device
     }
 
     template < typename T >
-    static inline void configure_vao( vertex_buffer_object& vbo,
-                                      vertex_array_object& vao ) noexcept
+    static inline void
+    configure_vao( vertex_buffer_object& vbo, vertex_array_object& vao ) noexcept
     {
         const auto s0 = scope_bind( vbo );
         const auto s1 = scope_bind( vao );
@@ -336,13 +330,12 @@ namespace gl_device
         for ( const auto& c : channels )
         {
             logger::log( "channel index: ", index, " channel size: ", c.m_size,
-                         " channel len: ", c.m_len,
-                         " channel offset: ", c.m_offset );
+                         " channel len: ", c.m_len, " channel offset: ", c.m_offset );
             const GLenum type = gl_type_to_gl_enum( c.m_type );
             logger::log( "Type: ", static_cast< int >( type ) );
 
-            gl_helpers::gl_call( glVertexAttribPointer, index, c.m_len, type,
-                                 GL_FALSE, size, ( void* )c.m_offset );
+            gl_helpers::gl_call( glVertexAttribPointer, index, c.m_len, type, GL_FALSE,
+                                 size, ( void* )c.m_offset );
             gl_helpers::gl_call( glEnableVertexAttribArray, index );
 
             index += 1;
@@ -377,8 +370,8 @@ namespace gl_device
             gl_helpers::gl_call( glGetProgramiv, program_id, GL_INFO_LOG_LENGTH,
                                  &max_len );
             std::vector< char > info_log( max_len );
-            gl_helpers::gl_call( glGetProgramInfoLog, program_id, max_len,
-                                 &max_len, &info_log[0] );
+            gl_helpers::gl_call( glGetProgramInfoLog, program_id, max_len, &max_len,
+                                 &info_log[0] );
 
             gl_helpers::gl_call( glDeleteProgram, program_id );
 
@@ -392,29 +385,25 @@ namespace gl_device
 
     template < typename T >
     static inline shader< T >
-    make_shader_from_binary( T&&,
-                             const std::vector< unsigned char >& data,
+    make_shader_from_binary( T&&, const std::vector< unsigned char >& data,
                              const std::string_view& entry_point ) noexcept
     {
         shader< T > vs = make_shader( T{} );
         assert( vs.is_valid() && "Shader is not valid!" );
 
-        gl_helpers::gl_call( glShaderBinary, 1, vs.ptr(),
-                             GL_SHADER_BINARY_FORMAT_SPIR_V, data.data(),
-                             data.size() );
+        gl_helpers::gl_call( glShaderBinary, 1, vs.ptr(), GL_SHADER_BINARY_FORMAT_SPIR_V,
+                             data.data(), data.size() );
 
-        gl_helpers::gl_call( glSpecializeShader, vs.id(), entry_point.data(), 0,
-                             nullptr, nullptr );
+        gl_helpers::gl_call( glSpecializeShader, vs.id(), entry_point.data(), 0, nullptr,
+                             nullptr );
 
         GLint is_compiled = 0;
-        gl_helpers::gl_call( glGetShaderiv, vs.id(), GL_COMPILE_STATUS,
-                             &is_compiled );
+        gl_helpers::gl_call( glGetShaderiv, vs.id(), GL_COMPILE_STATUS, &is_compiled );
 
         if ( is_compiled == GL_FALSE )
         {
             GLint max_len = 0;
-            gl_helpers::gl_call( glGetShaderiv, vs.id(), GL_INFO_LOG_LENGTH,
-                                 &max_len );
+            gl_helpers::gl_call( glGetShaderiv, vs.id(), GL_INFO_LOG_LENGTH, &max_len );
 
             std::vector< GLchar > info_log( max_len );
             gl_helpers::gl_call( glGetShaderInfoLog, vs.id(), max_len, &max_len,
@@ -434,15 +423,13 @@ struct renderer
     {
         gl_helpers::check_gl_errors();
 
-        const auto vs_data =
-            load_binary_data( "compiled_shaders/triangle.vert.spirv" );
-        const auto fs_data =
-            load_binary_data( "compiled_shaders/triangle.frag.spirv" );
+        const auto vs_data = load_binary_data( "compiled_shaders/triangle.vert.spirv" );
+        const auto fs_data = load_binary_data( "compiled_shaders/triangle.frag.spirv" );
 
-        auto vs = gl_device::make_shader_from_binary( vertex_shader_type{},
-                                                      vs_data, "main" );
-        auto fs = gl_device::make_shader_from_binary( fragment_shader_type{},
-                                                      fs_data, "main" );
+        auto vs =
+            gl_device::make_shader_from_binary( vertex_shader_type{}, vs_data, "main" );
+        auto fs =
+            gl_device::make_shader_from_binary( fragment_shader_type{}, fs_data, "main" );
 
         m_program = gl_device::make_program( std::move( vs ), std::move( fs ) );
         m_vbo     = gl_device::make_vbo();
@@ -454,8 +441,7 @@ struct renderer
 
     void on_render() noexcept
     {
-        gl_helpers::gl_call( glClear,
-                             GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+        gl_helpers::gl_call( glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         const auto s2 = scope_binder( m_program );
         const auto s1 = scope_binder( m_vao );

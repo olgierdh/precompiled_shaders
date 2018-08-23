@@ -5,17 +5,20 @@ AlignEscapedNewlinesLeft: false
 AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: true
 AlignConsecutiveAssignments: true
-AllowShortBlocksOnASingleLine: false
-AllowShortFunctionsOnASingleLine: false
+AllowShortBlocksOnASingleLine: true
+AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakBeforeMultilineStrings: false
-BinPackParameters: false
-BreakBeforeBinaryOperators: false
+BinPackParameters: true
+BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Allman
 BreakBeforeTernaryOperators: true
-ColumnLimit: 80
+BreakConstructorInitializers: BeforeComma
+ColumnLimit: 90
 ContinuationIndentWidth: 4
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+Cpp11BracedListStyle: true
 IndentCaseLabels: true
 IndentFunctionDeclarationAfterType: false
 IndentWidth: 4
@@ -29,7 +32,9 @@ SpaceBeforeParens: ControlStatements
 SpacesInAngles: true
 SpacesInCStyleCastParentheses: true
 SpacesInParentheses: true
+Standard: Cpp11
 UseTab: Never
 SortIncludes: false
 NamespaceIndentation: All
+FixNamespaceComments: true
 ...

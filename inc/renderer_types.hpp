@@ -9,6 +9,7 @@
 #include <array>
 
 #include "type_system.hpp"
+#include "string_literal.hpp"
 #include "logger.hpp"
 
 /* our building blocks */
