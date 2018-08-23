@@ -35,10 +35,8 @@ namespace nv
         struct reduce {};
         template < typename F = listify<>, typename C = listify<> >
         struct zip_with_index {};
+        template < typename C = listify<> > struct reverse {};
         // clang-format on
-        template < typename C = listify<> > struct reverse
-        {
-        };
 
         struct null_type
         {
@@ -586,15 +584,10 @@ namespace nv
     {
       public:
         constexpr static_array() noexcept {};
-
         constexpr T& operator[]( int i ) noexcept { return m_data[i]; }
-
         constexpr const T& operator[]( int i ) const noexcept { return m_data[i]; }
-
         constexpr T* ptr() noexcept { return &m_data[0]; }
-
         constexpr T* ptr() const noexcept { return &m_data[0]; }
-
         constexpr int size() noexcept { return N; }
 
       private:
