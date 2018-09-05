@@ -7,7 +7,7 @@
 #pragma once 
 
 #include <GL/glew.h>
-#include "logger.hpp"
+#include "../inc/logger.hpp"
 
 namespace gl_helpers
 {
@@ -85,7 +85,7 @@ namespace gl_helpers
     }
 
     template < typename R, typename... Args, typename... TArgs >
-    auto gl_call( R ( *func )( Args... ), TArgs&&... args ) -> R
+    auto gl_call( R ( GLAPIENTRY * func )( Args... ), TArgs&&... args ) -> R
     {
         const auto e0 = glGetError();
         R ret{0};
@@ -110,7 +110,7 @@ namespace gl_helpers
     }
 
     template < typename... Args, typename... TArgs >
-    void gl_call( void ( *func )( Args... ), TArgs&&... args )
+    void gl_call( void ( GLAPIENTRY * func )( Args... ), TArgs&&... args )
     {
         const auto e0 = glGetError();
 
@@ -143,7 +143,6 @@ namespace gl_helpers
 
     void eat_gl_errors()
     {
-        while ( glGetError() != GL_NO_ERROR )
-            ;
+        while ( glGetError() != GL_NO_ERROR );
     }
 } // namespace gl_helpers

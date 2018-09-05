@@ -41,35 +41,52 @@ struct vertex
     vec4f m_color0;
 };
 
+string_literal< _T( "vec3f" ) > vec3f_sl;
+string_literal< _T( "vec4f" ) > vec4f_sl;
+string_literal< _T( "vec4c" ) > vec4c_sl;
+string_literal< _T( "x" ) >     x_sl;
+string_literal< _T( "y" ) >     y_sl;
+string_literal< _T( "z" ) >     z_sl;
+string_literal< _T( "w" ) >     w_sl;
+string_literal< _T( "r" ) >     r_sl;
+string_literal< _T( "g" ) >     g_sl;
+string_literal< _T( "b" ) >     b_sl;
+string_literal< _T( "a" ) >     a_sl;
+
 /* meta description of types not very beautiful but handy later on */
 using vec3f_desc =
     decltype( make_struct_desc( vec3f{},
-                                "vec3f"_tstr,
-                                make_field_desc< &vec3f::x >( "x"_tstr ),
-                                make_field_desc< &vec3f::y >( "y"_tstr ),
-                                make_field_desc< &vec3f::z >( "z"_tstr ) ) );
+                                vec3f_sl,
+                                make_field_desc< &vec3f::x >( x_sl ),
+                                make_field_desc< &vec3f::y >( y_sl ),
+                                make_field_desc< &vec3f::z >( z_sl ) ) );
 
 using vec4f_desc =
     decltype( make_struct_desc( vec4f{},
-                                "vec4f"_tstr,
-                                make_field_desc< &vec4f::x >( "x"_tstr ),
-                                make_field_desc< &vec4f::y >( "y"_tstr ),
-                                make_field_desc< &vec4f::z >( "z"_tstr ),
-                                make_field_desc< &vec4f::w >( "w"_tstr ) ) );
+                                vec4f_sl,
+                                make_field_desc< &vec4f::x >( x_sl ),
+                                make_field_desc< &vec4f::y >( y_sl ),
+                                make_field_desc< &vec4f::z >( z_sl ),
+                                make_field_desc< &vec4f::w >( w_sl ) ) );
 using vec4c_desc =
     decltype( make_struct_desc( vec4c{},
-                                "vec4c"_tstr,
-                                make_field_desc< &vec4c::r >( "r"_tstr ),
-                                make_field_desc< &vec4c::g >( "g"_tstr ),
-                                make_field_desc< &vec4c::b >( "b"_tstr ),
-                                make_field_desc< &vec4c::a >( "a"_tstr ) ) );
+                                vec4c_sl,
+                                make_field_desc< &vec4c::r >( r_sl ),
+                                make_field_desc< &vec4c::g >( g_sl ),
+                                make_field_desc< &vec4c::b >( b_sl ),
+                                make_field_desc< &vec4c::a >( a_sl ) ) );
+
+
+string_literal< _T("vertex") >     vertex_sl;
+string_literal< _T("m_position") > m_position_sl;
+string_literal< _T("m_color0") >   m_color0_sl;
 
 
 using vertex_desc = decltype( make_struct_desc(
     vertex{},
-    "vertex"_tstr,
-    make_field_desc< &vertex::m_position >( "m_position"_tstr, vec4f_desc{} ),
-    make_field_desc< &vertex::m_color0 >( "m_color0"_tstr, vec4f_desc{} ) ) );
+    vertex_sl,
+    make_field_desc< &vertex::m_position >( m_position_sl, vec4f_desc{} ),
+    make_field_desc< &vertex::m_color0 >( m_color0_sl, vec4f_desc{} ) ) );
 
 /* list of types registered for renderer system */
 using renderer_reflection =
