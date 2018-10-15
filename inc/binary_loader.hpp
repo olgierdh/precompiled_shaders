@@ -1,7 +1,7 @@
 // Copyright (C) 2017-2018 ChaosForge Ltd
 // http://chaosforge.org/
 //
-// This file is part of Nova libraries. 
+// This file is part of Nova libraries.
 // For conditions of distribution and use, see copying.txt file in root folder.
 
 #pragma once
@@ -13,8 +13,7 @@
 
 #include "logger.hpp"
 
-inline std::vector< unsigned char >
-load_binary_data( std::string_view file_name )
+inline std::vector< unsigned char > load_binary_data( std::string_view file_name )
 {
     std::vector< unsigned char > ret;
     std::ifstream input( file_name.data(), std::ios::binary );
@@ -25,8 +24,7 @@ load_binary_data( std::string_view file_name )
         return ret;
     }
 
-    std::copy( std::istreambuf_iterator< char >( input ),
-            {}, std::back_inserter( ret ) );
+    std::copy( std::istreambuf_iterator< char >( input ), {}, std::back_inserter( ret ) );
 
     return ret;
 }

@@ -1,10 +1,10 @@
 // Copyright (C) 2017-2018 ChaosForge Ltd
 // http://chaosforge.org/
 //
-// This file is part of Nova libraries. 
+// This file is part of Nova libraries.
 // For conditions of distribution and use, see copying.txt file in root folder.
 
-#pragma once 
+#pragma once
 
 #include <GL/glew.h>
 #include "logger.hpp"

@@ -12,7 +12,7 @@ project "precompiled_shaders"
     files { "**.hpp", "**.cpp", "shaders/**.vert", "shaders/**.frag" }
     
     configuration { "linux", "gmake" }
-        buildoptions { "-Wall", "-Wextra", "-pedantic-errors", "-fdiagnostics-show-template-tree", "-fno-elide-type" } 
+        buildoptions { "-Wall", "-Wextra", "-pedantic-errors", "-fdiagnostics-show-template-tree", "-fno-elide-type", "-ftemplate-backtrace-limit=0" } 
     
     includedirs { "inc/" }
 
